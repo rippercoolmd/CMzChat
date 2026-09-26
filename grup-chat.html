@@ -1,0 +1,144 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CMzChat - Grup</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}:root{--g:#00a884;--p:#202C33;--s:#8696A0;--bg:#0B141A;--bubble-me:#005c4b;--bubble-other:#202c33}
+html,body{height:100%}
+body{display:flex;flex-direction:column;background:#0b141a;color:#e9edef;font-family:-apple-system,'Segoe UI',Roboto,sans-serif;overflow:hidden}
+.h{height:60px;background:var(--p);display:flex;align-items:center;padding:0 8px;gap:8px;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.h .back{width:40px;height:40px;border:0;background:transparent;color:#aebac1;font-size:22px;cursor:pointer;border-radius:50%}
+.h .av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#00a884,#06cf9c);display:grid;place-items:center;font-size:18px;flex-shrink:0}
+.h .info{flex:1;min-width:0}
+.h .info b{font-size:16px;color:#e9edef;display:block}
+.h .info .status{font-size:12px;color:var(--s);margin-top:1px}
+.msgs{flex:1;overflow-y:auto;padding:14px 8px 8px;display:flex;flex-direction:column}
+.msgs::-webkit-scrollbar{width:5px}.msgs::-webkit-scrollbar-thumb{background:#2a3942;border-radius:10px}
+.date-sep{text-align:center;margin:10px 0}
+.date-sep span{background:#182229;color:#8696a0;font-size:11px;padding:4px 11px;border-radius:12px}
+.msg-row{display:flex;margin:1px 0;gap:6px;align-items:flex-end}
+.msg-row.me{justify-content:flex-end;flex-direction:row-reverse}
+.bubble{max-width:78%;padding:7px 10px 6px;border-radius:8px;font-size:14.5px;line-height:19.5px;word-wrap:break-word;white-space:pre-wrap;position:relative;box-shadow:0 1px .5px rgba(0,0,0,.3)}
+.me .bubble{background:var(--bubble-me);border-top-right-radius:2px}
+.other .bubble{background:var(--bubble-other);border-top-left-radius:2px}
+.msg-row.first .bubble::before{content:'';position:absolute;top:0;width:10px;height:14px}
+.me.first .bubble::before{right:-8px;background:var(--bubble-me);clip-path:polygon(0 0,100% 0,0 100%)}
+.other.first .bubble::before{left:-8px;background:var(--bubble-other);clip-path:polygon(100% 0,100% 100%,0 0)}
+.msg-sender{font-size:12px;font-weight:600;color:#06cf9c;margin-bottom:3px}
+.bubble .t{font-size:10.5px;color:#ffffff99;float:right;margin:4px -2px -4px 8px}
+.bubble .t .tick{color:#53bdeb;font-size:12px;letter-spacing:-3px}
+.msg-av{width:30px;height:30px;border-radius:50%;background:#2a3942;display:grid;place-items:center;font-size:13px;font-weight:600;color:#c9d1d6;overflow:hidden;flex-shrink:0}
+.msg-av img{width:100%;height:100%;object-fit:cover}
+.msg-av.hide{visibility:hidden}
+.bar{background:var(--p);padding:8px 8px 10px;display:flex;gap:7px;align-items:flex-end;flex-shrink:0}
+.bar .inp-wrap{flex:1;background:#2A3942;border-radius:22px;display:flex;padding:2px}
+.bar textarea{flex:1;background:transparent;border:0;color:#fff;outline:none;padding:11px 16px;font-size:14.5px;font-family:inherit;resize:none;max-height:110px;line-height:20px}
+.bar .send{width:48px;height:48px;border-radius:50%;background:var(--g);border:0;color:#fff;font-size:19px;cursor:pointer;display:grid;place-items:center;flex-shrink:0}
+.empty-chat{text-align:center;color:var(--s);padding:40px 20px;font-size:13px}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#2a3942;color:#e9edef;padding:9px 16px;border-radius:20px;font-size:12.5px;opacity:0;transition:all .3s;z-index:99;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style></head><body>
+
+<div class="h">
+  <button class="back" onclick="location.href='grup.html'">←</button>
+  <div class="av">👥</div>
+  <div class="info">
+    <b id="grpName">-</b>
+    <div class="status" id="grpSub">-</div>
+  </div>
+</div>
+
+<div class="msgs" id="msgs"></div>
+
+<div class="bar">
+  <div class="inp-wrap"><textarea id="msgInput" placeholder="Ketik pesan..." rows="1"></textarea></div>
+  <button class="send" onclick="send()">➤</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="env.js"></script>
+<script>
+const K = 'cmzapps_final_wa100_v7';
+const AVATAR_KEY = 'cmz_avatars_v1';
+const GROUPS_KEY = 'cmz_groups_v1';
+const GMSGS_KEY = 'cmz_group_msgs_v1';
+
+let me = localStorage.getItem('cmz_me') || 'ceomudaz';
+let db = JSON.parse(localStorage.getItem(K) || '{"users":{}}');
+let groups = JSON.parse(localStorage.getItem(GROUPS_KEY) || '[]');
+let params = new URLSearchParams(location.search);
+let gid = params.get('id');
+
+if(!gid) location.href = 'grup.html';
+let group = groups.find(g => g.id === gid);
+if(!group){alert('Grup tidak ditemukan'); location.href = 'grup.html';}
+if(!group.members.includes(me)){alert('Kamu bukan anggota grup ini'); location.href = 'grup.html';}
+
+function getAvatar(u){try{return JSON.parse(localStorage.getItem(AVATAR_KEY)||'{}')[u]||'';}catch(e){return '';}}
+function avatarInner(u){let a = getAvatar(u); return a ? `<img src="${a}">` : u[0].toUpperCase();}
+
+document.getElementById('grpName').innerText = group.name;
+document.getElementById('grpSub').innerText = group.members.map(u => '@' + u).join(', ');
+
+function loadMsgs(){try{return JSON.parse(localStorage.getItem(GMSGS_KEY)||'{}')[gid]||[];}catch(e){return[];}}
+function saveMsgs(arr){try{let all = JSON.parse(localStorage.getItem(GMSGS_KEY)||'{}'); all[gid] = arr; localStorage.setItem(GMSGS_KEY, JSON.stringify(all));}catch(e){}}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+function formatDate(ts){
+  let d = new Date(ts), t = new Date();
+  let dd = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  let tt = new Date(t.getFullYear(), t.getMonth(), t.getDate());
+  let diff = Math.round((tt-dd)/86400000);
+  if(diff === 0) return 'Hari ini';
+  if(diff === 1) return 'Kemarin';
+  return d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+}
+
+let lastCount = 0;
+function render(scroll=true){
+  let arr = loadMsgs();
+  let el = document.getElementById('msgs');
+  if(!arr.length){
+    el.innerHTML = '<div class="empty-chat">💬 Belum ada pesan di grup ini</div>';
+    lastCount = 0;
+    return;
+  }
+  let html = '';
+  let prevBy = null, prevDate = null;
+  arr.forEach(m => {
+    let dl = formatDate(m.time);
+    if(dl !== prevDate){ html += `<div class="date-sep"><span>${dl}</span></div>`; prevDate = dl; prevBy = null; }
+    let isMe = m.by === me;
+    let t = new Date(m.time).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+    let isFirst = prevBy !== m.by;
+    let avHTML = isMe ? `<div class="msg-av hide"></div>` : (isFirst ? `<div class="msg-av">${avatarInner(m.by)}</div>` : `<div class="msg-av hide"></div>`);
+    html += `<div class="msg-row ${isMe?'me':'other'} ${isFirst?'first':''}">
+      ${avHTML}
+      <div class="bubble">${!isMe && isFirst?`<div class="msg-sender">${escapeHtml(m.by)}</div>`:''}${escapeHtml(m.text)}<span class="t">${t}${isMe?' <span class="tick">✓✓</span>':''}</span></div>
+    </div>`;
+    prevBy = m.by;
+  });
+  el.innerHTML = html;
+  if(scroll && lastCount !== arr.length) requestAnimationFrame(() => {el.scrollTop = el.scrollHeight;});
+  lastCount = arr.length;
+}
+
+function send(){
+  let inp = document.getElementById('msgInput');
+  let txt = inp.value.trim();
+  if(!txt) return;
+  let arr = loadMsgs();
+  arr.push({by:me, text:txt, time:Date.now()});
+  saveMsgs(arr);
+  inp.value = ''; autoResize(); render();
+}
+
+function showToast(m){let t = document.getElementById('toast'); t.innerText = m; t.classList.add('show'); clearTimeout(t._tm); t._tm = setTimeout(()=>t.classList.remove('show'), 2000);}
+
+let inp = document.getElementById('msgInput');
+function autoResize(){inp.style.height='auto'; inp.style.height = Math.min(inp.scrollHeight, 110) + 'px';}
+inp.addEventListener('input', autoResize);
+inp.addEventListener('keydown', e => {if(e.key==='Enter' && !e.shiftKey){e.preventDefault(); send();}});
+
+render();
+setInterval(() => render(false), 2000);
+setTimeout(() => inp.focus(), 200);
+</script></body></html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CMzChat - Bintang</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}:root{--g:#00a884;--p:#202C33;--s:#8696A0;--bg:#0B141A}
+body{min-height:100vh;background:var(--bg);color:#e9edef;font-family:-apple-system,'Segoe UI',Roboto,sans-serif}
+.h{height:60px;background:var(--p);display:flex;align-items:center;padding:0 14px;gap:10px;position:sticky;top:0;z-index:5}
+.h .back{width:40px;height:40px;border:0;background:transparent;color:#aebac1;font-size:22px;cursor:pointer;border-radius:50%}
+.h b{font-size:17px}
+.wrap{padding:16px;max-width:600px;margin:0 auto}
+.card{background:var(--p);border-radius:14px;padding:14px;margin-bottom:10px;border-left:3px solid #ffd600}
+.card .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.card .with{font-size:12px;color:var(--g);font-weight:600}
+.card .time{font-size:11px;color:var(--s)}
+.card .text{font-size:14px;line-height:1.5;white-space:pre-wrap;word-break:break-word;margin-top:4px}
+.card .btn-row{display:flex;gap:8px;margin-top:10px}
+.card .btn{padding:6px 14px;border:0;border-radius:16px;font-size:12px;font-weight:600;cursor:pointer;background:#2a3942;color:#fff}
+.card .btn.red{background:#ff3b3b}
+.card .btn.green{background:var(--g)}
+.empty{text-align:center;padding:60px 20px;color:var(--s)}
+.empty .em{font-size:50px;margin-bottom:12px;opacity:.5}
+.empty b{display:block;color:#e9edef;margin-bottom:6px;font-size:15px}
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);background:#2a3942;color:#e9edef;padding:10px 18px;border-radius:20px;font-size:13px;opacity:0;transition:all .3s;z-index:999;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style></head><body>
+
+<div class="h">
+  <button class="back" onclick="location.href='dashboard.html'">←</button>
+  <b>⭐ Pesan Berbintang</b>
+</div>
+
+<div class="wrap"><div id="list"></div></div>
+
+<div class="toast" id="toast"></div>
+
+<script src="env.js"></script>
+<script>
+const STARRED_KEY = 'cmz_starred_v1';
+let me = localStorage.getItem('cmz_me') || 'ceomudaz';
+
+function getStarred(){try{return JSON.parse(localStorage.getItem(STARRED_KEY)||'[]');}catch(e){return[];}}
+function setStarred(a){localStorage.setItem(STARRED_KEY, JSON.stringify(a));}
+
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+function render(){
+  let arr = getStarred();
+  let el = document.getElementById('list');
+  if(!arr.length){
+    el.innerHTML = '<div class="empty"><div class="em">⭐</div><b>Belum ada pesan berbintang</b>Klik pesan lalu pilih "Bintangi" untuk menyimpannya</div>';
+    return;
+  }
+  el.innerHTML = arr.map((s, i) => `
+    <div class="card">
+      <div class="head">
+        <div class="with">💬 dengan @${escapeHtml(s.chatWith || s.to || '?')}</div>
+        <div class="time">${new Date(s.time).toLocaleString('id-ID')}</div>
+      </div>
+      <div style="font-size:11px;color:var(--s)">Dari: @${escapeHtml(s.by)}</div>
+      <div class="text">${escapeHtml(s.text)}</div>
+      <div class="btn-row">
+        <button class="btn green" onclick="gotoChat('${escapeHtml(s.chatWith||s.to)}')">💬 Buka Chat</button>
+        <button class="btn red" onclick="unstar(${i})">🗑️ Hapus Bintang</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function unstar(i){
+  let arr = getStarred();
+  arr.splice(i, 1);
+  setStarred(arr);
+  render();
+  showToast('⭐ Bintang dihapus');
+}
+
+function gotoChat(u){
+  if(!u) return;
+  localStorage.setItem('cmz_active_chat', u);
+  location.href = 'chat.html?u=' + encodeURIComponent(u);
+}
+
+function showToast(m){let t = document.getElementById('toast'); t.innerText = m; t.classList.add('show'); clearTimeout(t._tm); t._tm = setTimeout(()=>t.classList.remove('show'), 2000);}
+
+render();
+</script></body></html>

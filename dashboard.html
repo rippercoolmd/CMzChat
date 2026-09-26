@@ -1,0 +1,425 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>CMzChat</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--g:#00a884;--p:#202C33;--s:#8696A0;--bg:#0B141A;--bubble-me:#005c4b;--bubble-other:#202c33}
+body{height:100vh;display:flex;flex-direction:column;background:var(--bg);color:#fff;font-family:-apple-system,'Segoe UI',Roboto,sans-serif;overflow:hidden}
+.h{height:60px;background:var(--p);display:flex;align-items:center;padding:0 14px;position:sticky;top:0;z-index:5;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.h .logo{display:flex;align-items:center;gap:8px}
+.h .logo b{font-size:19px;letter-spacing:.3px}
+.h .right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.h #meLabel{font-size:11px;color:var(--s);display:flex;align-items:center;gap:6px;background:#2a3942;padding:4px 10px 4px 4px;border-radius:20px;cursor:pointer}
+.dots{width:36px;height:36px;border:0;background:transparent;color:#aebac1;font-size:22px;cursor:pointer;border-radius:50%;display:grid;place-items:center}
+.dots:active{background:#2a3942}
+.menu-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:none}
+.menu-overlay.show{display:block}
+.menu-popup{position:absolute;top:55px;right:12px;background:#233138;border-radius:10px;min-width:200px;padding:6px 0;box-shadow:0 10px 40px rgba(0,0,0,.5);animation:popIn .15s ease-out}
+@keyframes popIn{from{opacity:0;transform:scale(.9) translateY(-10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.menu-item{padding:12px 18px;font-size:14.5px;color:#e9edef;cursor:pointer;display:flex;align-items:center;gap:12px}
+.menu-item:active,.menu-item:hover{background:#2a3942}
+.menu-item .ic{font-size:17px;width:22px;text-align:center}
+.topTabs{display:flex;background:var(--p);border-top:1px solid #ffffff0a;position:sticky;top:60px;z-index:4}
+.topTab{flex:1;padding:12px;text-align:center;font-size:13px;color:var(--s);cursor:pointer;border-bottom:2.5px solid transparent;transition:all .2s;font-weight:500}
+.topTab.active{color:var(--g);border-bottom-color:var(--g)}
+.list{flex:1;overflow-y:auto;background:#111B21}
+.chat-item{padding:12px 14px;display:flex;gap:13px;align-items:center;cursor:pointer;transition:background .15s;border-bottom:1px solid #ffffff08;position:relative}
+.chat-item:active{background:#1f2c33}
+.avatar{width:49px;height:49px;border-radius:50%;background:linear-gradient(135deg,#3b4a54,#2a3942);display:grid;place-items:center;font-size:20px;font-weight:600;color:#c9d1d6;flex-shrink:0;overflow:hidden;position:relative}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.chat-info{flex:1;min-width:0}
+.chat-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.chat-name{font-size:16px;font-weight:500;color:#e9edef;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:4px}
+.chat-time{font-size:11px;color:var(--s);flex-shrink:0}
+.chat-time.unread{color:#25d366;font-weight:600}
+.chat-preview{font-size:13.5px;color:var(--s);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.unread-badge{position:absolute;right:14px;bottom:12px;background:#25d366;color:#fff;font-size:11px;font-weight:600;min-width:20px;height:20px;padding:0 6px;border-radius:10px;display:grid;place-items:center}
+.verified-badge{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;background:#1DA1F2;border-radius:50%;flex-shrink:0}
+.verified-badge svg{width:9px;height:9px;fill:#fff}
+.role-tag{font-size:9px;padding:2px 6px;border-radius:6px;background:#2a3942;color:#aebac1;font-weight:600;margin-left:4px}
+.role-tag.dev{background:#ff3b3b;color:#fff}.role-tag.own{background:#ffd600;color:#000}
+.empty{text-align:center;padding:60px 20px;color:var(--s)}
+.empty b{display:block;font-size:15px;color:#e9edef;margin-bottom:6px}
+.group-avatar{background:linear-gradient(135deg,#00a884,#06cf9c)!important}
+.global-header{background:linear-gradient(135deg,#1f2c33,#26353e);padding:14px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #ffffff0a}
+.global-av{width:50px;height:50px;background:linear-gradient(135deg,#00a884,#06cf9c);border-radius:50%;display:grid;place-items:center;font-size:22px}
+.global-msg{padding:8px 14px;margin:4px 0}
+.gm-name{font-size:12.5px;font-weight:600;color:#aebac1;display:flex;align-items:center;gap:4px;margin-bottom:2px}
+.gm-row{display:flex;gap:8px;align-items:flex-end}
+.gm-row.me{flex-direction:row-reverse}
+.gm-bubble{background:var(--bubble-other);padding:8px 12px;border-radius:8px;font-size:14px;line-height:19px;max-width:80%;word-break:break-word}
+.gm-bubble.me{background:var(--bubble-me)}
+.gm-bubble .gm-time{font-size:10px;color:#ffffff99;display:block;text-align:right;margin-top:3px}
+.global-input{background:var(--p);padding:10px;display:flex;gap:8px;border-top:1px solid #ffffff0a}
+.global-input input{flex:1;background:#2A3942;border:0;border-radius:22px;padding:12px 18px;color:#fff;outline:none;font-size:14.5px}
+.global-input button{width:48px;height:48px;border-radius:50%;background:var(--g);border:0;color:#fff;font-size:19px;cursor:pointer}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#2a3942;color:#e9edef;padding:10px 18px;border-radius:20px;font-size:13px;opacity:0;transition:all .3s;z-index:999;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ===== PREMIUM BOTTOM NAV ===== */
+.bottom{
+  height:72px;
+  background:linear-gradient(180deg,#1a252c 0%,#202C33 60%,#1f2a31 100%);
+  display:flex;
+  border-top:1px solid rgba(255,255,255,0.05);
+  flex-shrink:0;
+  position:relative;
+  box-shadow:0 -12px 40px rgba(0,0,0,0.5);
+  padding:0 4px 4px;
+  gap:2px;
+}
+.bottom::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(6,207,156,0.3),transparent);
+}
+.bnav{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+  color:#6b7785;
+  font-size:9.5px;
+  font-weight:600;
+  letter-spacing:.3px;
+  text-decoration:none;
+  position:relative;
+  border-radius:16px;
+  margin:6px 3px 4px;
+  transition:all .3s cubic-bezier(.4,0,.2,1);
+  overflow:hidden;
+  -webkit-tap-highlight-color:transparent;
+}
+.bnav::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:radial-gradient(circle at 50% 30%, rgba(0,168,132,.18), transparent 70%);
+  opacity:0;
+  transition:opacity .35s;
+  border-radius:16px;
+}
+.bnav svg{
+  width:22px;
+  height:22px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.9;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  transition:all .3s cubic-bezier(.4,0,.2,1);
+  z-index:1;
+  position:relative;
+}
+.bnav span{
+  font-size:9.5px;
+  font-weight:600;
+  letter-spacing:.3px;
+  z-index:1;
+  position:relative;
+  transition:all .3s;
+  text-transform:uppercase;
+}
+.bnav.active{
+  color:#06cf9c;
+  background:linear-gradient(180deg,rgba(0,168,132,.14),rgba(0,168,132,.02));
+}
+.bnav.active::before{opacity:1;}
+.bnav.active::after{
+  content:'';
+  position:absolute;
+  top:0;
+  left:50%;
+  transform:translateX(-50%);
+  width:32px;
+  height:3px;
+  background:linear-gradient(90deg,transparent,#06cf9c,transparent);
+  border-radius:0 0 6px 6px;
+  box-shadow:0 0 14px #06cf9c,0 0 4px #06cf9c;
+  animation:navIndicator .35s cubic-bezier(.4,0,.2,1);
+}
+@keyframes navIndicator{
+  from{width:0;opacity:0;}
+  to{width:32px;opacity:1;}
+}
+.bnav.active svg{
+  transform:scale(1.12) translateY(-1px);
+  filter:drop-shadow(0 0 8px rgba(6,207,156,.6));
+}
+.bnav:active svg{
+  transform:scale(.85);
+  transition:transform .12s;
+}
+.bnav .ripple{
+  position:absolute;
+  border-radius:50%;
+  background:rgba(6,207,156,.35);
+  transform:scale(0);
+  animation:rippleAnim .55s ease-out;
+  pointer-events:none;
+}
+@keyframes rippleAnim{
+  to{transform:scale(3.5);opacity:0;}
+}
+</style></head><body>
+
+<div class="h">
+  <div class="logo"><b style="color:var(--g)">CMz</b><b>Chat</b></div>
+  <div class="right">
+    <div id="meLabel" onclick="location.href='profil.html'"></div>
+    <button class="dots" onclick="toggleMenu()">⋮</button>
+  </div>
+</div>
+
+<div class="menu-overlay" id="menuOverlay" onclick="closeMenu()">
+  <div class="menu-popup" onclick="event.stopPropagation()">
+    <div class="menu-item" onclick="menuAction('grup')"><span class="ic">👥</span>Buat Grup</div>
+    <div class="menu-item" onclick="menuAction('baca')"><span class="ic">✅</span>Baca Semua</div>
+    <div class="menu-item" onclick="menuAction('star')"><span class="ic">⭐</span>Berbintang</div>
+    <div class="menu-item" onclick="menuAction('setting')"><span class="ic">⚙️</span>Pengaturan</div>
+  </div>
+</div>
+
+<div class="topTabs">
+  <div id="tabUser" class="topTab active" onclick="switchTab('user')">💬 Private</div>
+  <div id="tabGlobal" class="topTab" onclick="switchTab('global')">🌐 Global</div>
+</div>
+
+<div id="viewUser" class="list"><div id="listChat"></div></div>
+
+<div id="viewGlobal" style="flex:1;display:none;flex-direction:column;background:#111B21;overflow:hidden">
+  <div class="global-header">
+    <div class="global-av">🌐</div>
+    <div style="flex:1">
+      <b style="font-size:15px">Global Grup CMzChat</b>
+      <div style="font-size:11.5px;color:var(--s);margin-top:2px"><span id="globalCount">0</span> anggota</div>
+    </div>
+  </div>
+  <div id="globalMessages" style="flex:1;overflow-y:auto;padding:8px"></div>
+  <div class="global-input">
+    <input id="globalInput" placeholder="Ketik pesan...">
+    <button onclick="sendGlobal()">➤</button>
+  </div>
+</div>
+
+<div class="bottom">
+  <a href="dashboard.html" class="bnav active" data-nav>
+    <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+    <span>Chat</span>
+  </a>
+  <a href="status.html" class="bnav" data-nav>
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    <span>Status</span>
+  </a>
+  <a href="informasi.html" class="bnav" data-nav>
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="11"/><circle cx="12" cy="8" r="1" fill="currentColor"/></svg>
+    <span>Info</span>
+  </a>
+  <a href="fitur.html" class="bnav" data-nav>
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span>Fitur</span>
+  </a>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="env.js"></script>
+<script>
+const K = 'cmzapps_final_wa100_v7';
+const GLOBAL_KEY = 'cmz_global_grup_v1';
+const CHAT_KEY = 'cmz_private_v1';
+const AVATAR_KEY = 'cmz_avatars_v1';
+const UNREAD_KEY = 'cmz_unread_v1';
+const GROUPS_KEY = 'cmz_groups_v1';
+
+let me = localStorage.getItem('cmz_me') || 'ceomudaz';
+let db = JSON.parse(localStorage.getItem(K) || '{"users":{}}');
+let globalChat = JSON.parse(localStorage.getItem(GLOBAL_KEY) || '[]');
+let groups = JSON.parse(localStorage.getItem(GROUPS_KEY) || '[]');
+
+if(!db.users['ceomudaz']) db.users['ceomudaz'] = {};
+db.users['ceomudaz'].role = 'Developer';
+if(!db.users['Fajars']) db.users['Fajars'] = {};
+db.users['Fajars'].role = 'Developer';
+localStorage.setItem(K, JSON.stringify(db));
+
+try { if(db.users[me]?.banned) location.href = 'banned.html'; } catch(e) {}
+
+function getAvatar(u){try{return JSON.parse(localStorage.getItem(AVATAR_KEY)||'{}')[u]||'';}catch(e){return '';}}
+function avatarHTML(u, size=49){
+  let img = getAvatar(u);
+  let fs = Math.floor(size*0.42);
+  if(img) return `<div class="avatar" style="width:${size}px;height:${size}px"><img src="${img}"></div>`;
+  return `<div class="avatar" style="width:${size}px;height:${size}px;font-size:${fs}px">${u[0].toUpperCase()}</div>`;
+}
+function getUnread(){try{return JSON.parse(localStorage.getItem(UNREAD_KEY)||'{}');}catch(e){return{};}}
+function isVer(u){try{return db.users[u]?.verified && db.users[u].verified.end>Date.now();}catch(e){return false}}
+function badge(){return '<span class="verified-badge"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span>';}
+function roleTag(r){let c = r==='Developer'?'dev':r==='Owner'?'own':''; return `<span class="role-tag ${c}">${r||'User'}</span>`;}
+
+document.getElementById('meLabel').innerHTML = `${avatarHTML(me, 30)}<span>${me}</span>`;
+
+let currentTab = 'user';
+function switchTab(t){
+  currentTab = t;
+  document.getElementById('tabUser').classList.toggle('active', t==='user');
+  document.getElementById('tabGlobal').classList.toggle('active', t==='global');
+  document.getElementById('viewUser').style.display = t==='user'?'block':'none';
+  document.getElementById('viewGlobal').style.display = t==='global'?'flex':'none';
+  if(t==='global') renderGlobal();
+}
+
+function getKey(a,b){return [a,b].sort().join('_');}
+function getLastMsg(u){
+  let chats = {}; try{chats = JSON.parse(localStorage.getItem(CHAT_KEY)||'{}');}catch(e){}
+  let arr = chats[getKey(me,u)] || [];
+  if(!arr.length) return {t:'Ketuk untuk mulai chat', tm:''};
+  let m = arr[arr.length-1];
+  return {t:(m.by===me?'Anda: ':'')+m.text, tm:new Date(m.time).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})};
+}
+
+function render(){
+  let el = document.getElementById('listChat'); el.innerHTML = '';
+  document.getElementById('globalCount').innerText = Object.keys(db.users).length;
+  let unread = getUnread();
+  let items = [];
+
+  groups.forEach(g => {
+    if(!g.members.includes(me)) return;
+    let gm = JSON.parse(localStorage.getItem('cmz_group_msgs_v1')||'{}')[g.id]||[];
+    let last = gm.length ? gm[gm.length-1] : null;
+    let unreadCount = unread['g_'+g.id] || 0;
+    items.push({
+      type:'group', id:g.id, name:g.name,
+      avatar:`<div class="avatar group-avatar" style="width:49px;height:49px;font-size:18px">👥</div>`,
+      last: last ? {t:(last.by===me?'Anda: ':'')+last.text, tm:new Date(last.time).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})} : {t:'Grup baru', tm:''},
+      sub: g.members.length + ' anggota',
+      unread: unreadCount,
+      onclick: `openGroup('${g.id}')`
+    });
+  });
+
+  let users = Object.keys(db.users).filter(u => u !== me);
+  users.forEach(u => {
+    let last = getLastMsg(u);
+    let unreadCount = unread[getKey(me,u)] || 0;
+    items.push({
+      type:'user', name:u,
+      avatar: avatarHTML(u, 49),
+      last: last,
+      sub: null,
+      unread: unreadCount,
+      nameHTML: `${u}${isVer(u)?badge():''}${roleTag(db.users[u].role||'User')}${db.users[u].banned?' 🚫':''}`,
+      onclick: `openChat('${u}')`
+    });
+  });
+
+  if(!items.length){
+    el.innerHTML = '<div class="empty"><b>Belum ada chat</b>Ajak teman atau buat grup baru!</div>';
+    return;
+  }
+
+  el.innerHTML = items.map(it => `
+    <div class="chat-item" onclick="${it.onclick}">
+      ${it.avatar}
+      <div class="chat-info">
+        <div class="chat-top">
+          <div class="chat-name">${it.nameHTML || it.name}</div>
+          <div class="chat-time ${it.unread?'unread':''}">${it.unread?'• ':''}${it.last.tm}</div>
+        </div>
+        <div class="chat-preview">${it.sub || it.last.t}</div>
+      </div>
+      ${it.unread ? `<div class="unread-badge">${it.unread}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+function openChat(u){localStorage.setItem('cmz_active_chat', u); location.href='chat.html?u='+encodeURIComponent(u);}
+function openGroup(id){location.href='grup-chat.html?id='+encodeURIComponent(id);}
+
+function renderGlobal(){
+  let el = document.getElementById('globalMessages');
+  if(!globalChat.length){el.innerHTML = '<div class="empty"><b>Belum ada pesan</b>Jadi yang pertama!</div>'; return;}
+  el.innerHTML = globalChat.map(m => {
+    let isMe = m.by === me;
+    let t = new Date(m.time).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+    return `<div class="global-msg">
+      <div class="gm-name" style="${isMe?'justify-content:flex-end':''}"><b>${m.by}</b>${isVer(m.by)?badge():''}${roleTag(m.role)}</div>
+      <div class="gm-row ${isMe?'me':''}">
+        ${avatarHTML(m.by, 32)}
+        <div class="gm-bubble ${isMe?'me':''}">${escapeHtml(m.text)}<span class="gm-time">${t}${isMe?' ✓✓':''}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+function sendGlobal(){
+  let input = document.getElementById('globalInput');
+  let txt = input.value.trim();
+  if(!txt) return;
+  globalChat.push({by:me, role:db.users[me]?.role||'User', text:txt, time:Date.now()});
+  if(globalChat.length>300) globalChat = globalChat.slice(-300);
+  localStorage.setItem(GLOBAL_KEY, JSON.stringify(globalChat));
+  input.value = ''; renderGlobal();
+}
+document.getElementById('globalInput').addEventListener('keypress', e => {if(e.key==='Enter') sendGlobal();});
+
+function toggleMenu(){document.getElementById('menuOverlay').classList.toggle('show');}
+function closeMenu(){document.getElementById('menuOverlay').classList.remove('show');}
+function menuAction(a){
+  closeMenu();
+  setTimeout(() => {
+    if(a==='grup') location.href = 'grup.html';
+    else if(a==='baca') bacaSemua();
+    else if(a==='star') location.href = 'berbintang.html';
+    else if(a==='setting') location.href = 'pengaturan.html';
+  }, 150);
+}
+function bacaSemua(){
+  localStorage.setItem(UNREAD_KEY, JSON.stringify({}));
+  render();
+  showToast('✅ Semua pesan ditandai sudah dibaca');
+}
+function showToast(m){
+  let t = document.getElementById('toast');
+  t.innerText = m; t.classList.add('show');
+  clearTimeout(t._tm);
+  t._tm = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+setInterval(() => {if(currentTab==='user') render(); else renderGlobal();}, 3000);
+window.addEventListener('focus', render);
+
+render(); renderGlobal();
+
+// Ripple effect
+document.querySelectorAll('[data-nav]').forEach(el => {
+  el.addEventListener('touchstart', function(e){
+    let rect = this.getBoundingClientRect();
+    let touch = e.touches[0];
+    let ripple = document.createElement('span');
+    ripple.className = 'ripple';
+    let size = Math.max(rect.width, rect.height);
+    ripple.style.width = ripple.style.height = size + 'px';
+    ripple.style.left = (touch.clientX - rect.left - size/2) + 'px';
+    ripple.style.top = (touch.clientY - rect.top - size/2) + 'px';
+    this.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 600);
+  }, {passive:true});
+  el.addEventListener('mousedown', function(e){
+    let rect = this.getBoundingClientRect();
+    let ripple = document.createElement('span');
+    ripple.className = 'ripple';
+    let size = Math.max(rect.width, rect.height);
+    ripple.style.width = ripple.style.height = size + 'px';
+    ripple.style.left = (e.clientX - rect.left - size/2) + 'px';
+    ripple.style.top = (e.clientY - rect.top - size/2) + 'px';
+    this.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 600);
+  });
+});
+</script></body></html>

