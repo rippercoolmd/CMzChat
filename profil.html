@@ -1,0 +1,110 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>CMzChat - Profil</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--g:#00a884;--g2:#06cf9c;--p:#1f2c33;--s:#8696A0}
+body{min-height:100vh;background:radial-gradient(circle at 50% 0%,#0f1e22 0%,#0B141A 40%,#05080a 100%);color:#e9edef;font-family:-apple-system,'Segoe UI',Roboto,sans-serif}
+.h{height:64px;background:linear-gradient(180deg,rgba(32,44,51,.95),rgba(32,44,51,.9));backdrop-filter:blur(20px);display:flex;align-items:center;padding:0 14px;gap:10px;position:sticky;top:0;z-index:5;border-bottom:1px solid rgba(255,255,255,.04)}
+.h .back{width:42px;height:42px;border:0;background:transparent;color:#aebac1;font-size:20px;cursor:pointer;border-radius:50%;display:grid;place-items:center;transition:background .15s}
+.h .back:active{background:rgba(255,255,255,.08)}
+.h b{font-size:17px;font-weight:600}
+.wrap{padding:24px 20px;max-width:500px;margin:0 auto}
+.card{background:linear-gradient(180deg,rgba(32,44,51,.75),rgba(32,44,51,.4));backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.06);border-radius:22px;padding:28px 24px;margin-bottom:16px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.05)}
+.big-av{width:140px;height:140px;border-radius:50%;background:linear-gradient(135deg,#3b4a54,#2a3942);display:grid;place-items:center;font-size:56px;font-weight:600;color:#c9d1d6;overflow:hidden;margin:0 auto 18px;border:4px solid transparent;background-image:linear-gradient(#2a3942,#2a3942),linear-gradient(135deg,var(--g),var(--g2));background-origin:border-box;background-clip:padding-box,border-box;position:relative;cursor:pointer;transition:transform .2s;box-shadow:0 20px 50px rgba(0,168,132,.3)}
+.big-av:active{transform:scale(.97)}
+.big-av img{width:100%;height:100%;object-fit:cover;display:block}
+.big-av .cam{position:absolute;bottom:8px;right:8px;width:40px;height:40px;background:linear-gradient(135deg,var(--g),var(--g2));border-radius:50%;display:grid;place-items:center;font-size:18px;border:3px solid #1f2c33;box-shadow:0 4px 12px rgba(0,168,132,.5)}
+.name{font-size:22px;font-weight:700;margin-bottom:6px;letter-spacing:-.3px}
+.sub{font-size:13px;color:var(--s);letter-spacing:.2px}
+.role-tag{display:inline-block;font-size:10px;padding:5px 12px;border-radius:20px;background:rgba(255,255,255,.06);color:#aebac1;font-weight:700;margin-top:10px;letter-spacing:.5px;text-transform:uppercase;border:1px solid rgba(255,255,255,.06)}
+.role-tag.dev{background:linear-gradient(135deg,rgba(255,59,59,.2),rgba(224,32,32,.15));color:#ff5c5c;border-color:rgba(255,59,59,.3)}
+.role-tag.own{background:linear-gradient(135deg,rgba(255,214,0,.2),rgba(240,184,0,.15));color:#ffd600;border-color:rgba(255,214,0,.3)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:15px;border:0;border-radius:14px;font-size:15px;font-weight:600;cursor:pointer;transition:all .25s;margin-top:10px;font-family:inherit;letter-spacing:.3px}
+.btn-primary{background:linear-gradient(135deg,var(--g),var(--g2));color:#fff;box-shadow:0 8px 24px rgba(0,168,132,.35),inset 0 1px 0 rgba(255,255,255,.15)}
+.btn-primary:active{transform:scale(.98)}
+.btn-sec{background:rgba(255,255,255,.05);color:#e9edef;border:1px solid rgba(255,255,255,.08)}
+.btn-danger{background:rgba(255,59,59,.08);color:#ff5c5c;border:1px solid rgba(255,59,59,.25)}
+.btn-danger:active{background:rgba(255,59,59,.15)}
+.hidden{display:none!important}
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:rgba(42,57,66,.98);backdrop-filter:blur(20px);color:#e9edef;padding:12px 22px;border-radius:24px;font-size:13.5px;font-weight:500;opacity:0;transition:all .35s cubic-bezier(.4,0,.2,1);z-index:99;pointer-events:none;box-shadow:0 12px 32px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.08)}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.verified-badge{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;background:linear-gradient(135deg,#1DA1F2,#0d8de0);border-radius:50%;vertical-align:middle;margin-left:6px;box-shadow:0 2px 6px rgba(29,161,242,.4)}
+.verified-badge svg{width:10px;height:10px;fill:#fff}
+</style></head><body>
+
+<div class="h">
+  <button class="back" onclick="location.href='dashboard.html'">←</button>
+  <b>Profil Saya</b>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <div class="big-av" id="bigAv" onclick="document.getElementById('fileInput').click()">
+      <span id="bigAvText">U</span>
+      <div class="cam">📷</div>
+    </div>
+    <input type="file" id="fileInput" accept="image/*" style="display:none">
+    <div class="name" id="nameEl">-</div>
+    <div class="sub" id="subEl">-</div>
+    <div id="roleEl"></div>
+  </div>
+
+  <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">📷 Ganti Foto Profil</button>
+  <button class="btn btn-sec hidden" id="btnHapus" onclick="hapusFoto()">🗑️ Hapus Foto</button>
+  <button class="btn btn-danger" onclick="logout()">🚪 Logout</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="env.js"></script>
+<script>
+const K = 'cmzapps_final_wa100_v7';
+const AVATAR_KEY = 'cmz_avatars_v1';
+let me = localStorage.getItem('cmz_me') || 'ceomudaz';
+let db = JSON.parse(localStorage.getItem(K) || '{"users":{}}');
+
+function isVer(u){try{return db.users[u]?.verified && db.users[u].verified.end > Date.now()}catch(e){return false}}
+function badge(){return '<span class="verified-badge"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span>';}
+function getAvatar(u) {try {let a = JSON.parse(localStorage.getItem(AVATAR_KEY) || '{}'); return a[u] || '';} catch(e) { return ''; }}
+function setAvatar(u, base64) {
+  try { let a = JSON.parse(localStorage.getItem(AVATAR_KEY) || '{}'); if(base64) a[u] = base64; else delete a[u]; localStorage.setItem(AVATAR_KEY, JSON.stringify(a)); } catch(e) {}
+}
+
+function refresh(){
+  document.getElementById('nameEl').innerHTML = me + (isVer(me)?badge():'');
+  let role = me === 'ceomudaz' ? 'Developer' : (db.users[me]?.role || 'User');
+  let cls = role === 'Developer' ? 'dev' : role === 'Owner' ? 'own' : '';
+  document.getElementById('roleEl').innerHTML = `<span class="role-tag ${cls}">${role}</span>`;
+  document.getElementById('subEl').innerText = '@' + me;
+
+  let av = getAvatar(me);
+  let bigAv = document.getElementById('bigAv');
+  if(av){ bigAv.innerHTML = `<img src="${av}"><div class="cam">📷</div>`; document.getElementById('btnHapus').classList.remove('hidden'); }
+  else { bigAv.innerHTML = `<span>${me[0].toUpperCase()}</span><div class="cam">📷</div>`; document.getElementById('btnHapus').classList.add('hidden'); }
+}
+
+document.getElementById('fileInput').addEventListener('change', function(e){
+  let f = e.target.files[0]; if(!f) return;
+  if(f.size > 2 * 1024 * 1024){ showToast('❌ Ukuran max 2MB'); return; }
+  let r = new FileReader();
+  r.onload = function(ev){
+    let img = new Image();
+    img.onload = function(){
+      let canvas = document.createElement('canvas');
+      let maxSize = 400; let w = img.width, h = img.height;
+      if(w > h){ if(w > maxSize){ h = h * maxSize / w; w = maxSize; } }
+      else { if(h > maxSize){ w = w * maxSize / h; h = maxSize; } }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      setAvatar(me, canvas.toDataURL('image/jpeg', 0.85));
+      refresh(); showToast('✅ Foto profil tersimpan!');
+    };
+    img.src = ev.target.result;
+  };
+  r.readAsDataURL(f);
+});
+
+function hapusFoto(){ if(!confirm('Hapus foto profil?')) return; setAvatar(me, null); refresh(); showToast('🗑️ Foto dihapus'); }
+function logout(){ if(!confirm('Logout dari akun ' + me + '?')) return; localStorage.removeItem('cmz_me'); location.href = 'login.html'; }
+function showToast(m){ let t = document.getElementById('toast'); t.innerText = m; t.classList.add('show'); clearTimeout(t._tm); t._tm = setTimeout(() => t.classList.remove('show'), 2200); }
+refresh();
+</script></body></html>

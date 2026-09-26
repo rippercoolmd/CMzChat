@@ -1,0 +1,151 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CMzChat - Grup</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}:root{--g:#00a884;--p:#202C33;--s:#8696A0;--bg:#0B141A}
+body{min-height:100vh;background:var(--bg);color:#e9edef;font-family:-apple-system,'Segoe UI',Roboto,sans-serif}
+.h{height:60px;background:var(--p);display:flex;align-items:center;padding:0 14px;gap:10px;position:sticky;top:0;z-index:5}
+.h .back{width:40px;height:40px;border:0;background:transparent;color:#aebac1;font-size:22px;cursor:pointer;border-radius:50%}
+.h b{font-size:17px;flex:1}
+.h .add{width:40px;height:40px;border:0;background:var(--g);color:#fff;border-radius:50%;font-size:22px;cursor:pointer;display:grid;place-items:center}
+.wrap{padding:16px;max-width:600px;margin:0 auto}
+.grp{background:var(--p);border-radius:14px;padding:14px;margin-bottom:10px;display:flex;gap:12px;align-items:center;cursor:pointer}
+.grp:active{background:#2a3942}
+.grp-av{width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#00a884,#06cf9c);display:grid;place-items:center;font-size:22px;flex-shrink:0}
+.grp-info{flex:1;min-width:0}
+.grp-name{font-size:15px;font-weight:600;margin-bottom:2px}
+.grp-sub{font-size:12px;color:var(--s)}
+.empty{text-align:center;padding:60px 20px;color:var(--s)}
+.empty .em{font-size:50px;margin-bottom:12px;opacity:.5}
+.empty b{display:block;color:#e9edef;margin-bottom:6px;font-size:15px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
+.modal.show{display:flex}
+.modal-box{background:#111b21;border-radius:16px;padding:20px;max-width:420px;width:100%;max-height:85vh;overflow-y:auto}
+.modal-box h3{font-size:16px;margin-bottom:14px}
+input{width:100%;background:#2A3942;border:0;border-radius:10px;padding:12px;color:#fff;outline:none;font-size:14px;margin-bottom:10px}
+.btn{width:100%;padding:13px;border:0;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;background:var(--g);color:#fff;margin-top:8px}
+.btn.sec{background:#2a3942}
+.member-row{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;cursor:pointer}
+.member-row:active{background:#2a3942}
+.member-row.selected{background:rgba(0,168,132,.15)}
+.avatar-sm{width:40px;height:40px;border-radius:50%;background:#2a3942;display:grid;place-items:center;font-size:15px;overflow:hidden}
+.avatar-sm img{width:100%;height:100%;object-fit:cover}
+.chk{width:22px;height:22px;border:2px solid #8696a0;border-radius:50%;display:grid;place-items:center;font-size:12px;color:transparent}
+.member-row.selected .chk{background:var(--g);border-color:var(--g);color:#fff}
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);background:#2a3942;color:#e9edef;padding:10px 18px;border-radius:20px;font-size:13px;opacity:0;transition:all .3s;z-index:999;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style></head><body>
+
+<div class="h">
+  <button class="back" onclick="location.href='dashboard.html'">←</button>
+  <b>👥 Grup Saya</b>
+  <button class="add" onclick="openCreate()">+</button>
+</div>
+
+<div class="wrap"><div id="listGrup"></div></div>
+
+<div class="modal" id="createModal" onclick="if(event.target===this)closeCreate()">
+  <div class="modal-box">
+    <h3>👥 Buat Grup Baru</h3>
+    <input id="grpName" placeholder="Nama grup...">
+    <div style="font-size:12px;color:var(--s);margin:8px 0">Pilih anggota:</div>
+    <div id="memberList"></div>
+    <button class="btn" onclick="createGroup()">✅ Buat Grup</button>
+    <button class="btn sec" onclick="closeCreate()">Batal</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="env.js"></script>
+<script>
+const K = 'cmzapps_final_wa100_v7';
+const AVATAR_KEY = 'cmz_avatars_v1';
+const GROUPS_KEY = 'cmz_groups_v1';
+
+let me = localStorage.getItem('cmz_me') || 'ceomudaz';
+let db = JSON.parse(localStorage.getItem(K) || '{"users":{}}');
+let groups = JSON.parse(localStorage.getItem(GROUPS_KEY) || '[]');
+let selectedMembers = [];
+
+function getAvatar(u){try{return JSON.parse(localStorage.getItem(AVATAR_KEY)||'{}')[u]||'';}catch(e){return '';}}
+
+function renderGroups(){
+  let myGroups = groups.filter(g => g.members.includes(me));
+  let el = document.getElementById('listGrup');
+  if(!myGroups.length){
+    el.innerHTML = '<div class="empty"><div class="em">👥</div><b>Belum ada grup</b>Tekan tombol + untuk buat grup</div>';
+    return;
+  }
+  el.innerHTML = myGroups.map(g => `
+    <div class="grp" onclick="openGroup('${g.id}')">
+      <div class="grp-av">👥</div>
+      <div class="grp-info">
+        <div class="grp-name">${escapeHtml(g.name)}</div>
+        <div class="grp-sub">${g.members.length} anggota • Dibuat oleh @${g.createdBy}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+function openGroup(id){location.href = 'grup-chat.html?id=' + id;}
+
+function openCreate(){
+  selectedMembers = [];
+  document.getElementById('grpName').value = '';
+  let users = Object.keys(db.users).filter(u => u !== me && !db.users[u].banned);
+  let el = document.getElementById('memberList');
+  if(!users.length){
+    el.innerHTML = '<div style="text-align:center;color:var(--s);padding:20px">Belum ada user lain</div>';
+  } else {
+    el.innerHTML = users.map(u => `
+      <div class="member-row" data-user="${u}" onclick="toggleMember('${u}')">
+        <div class="avatar-sm">${getAvatar(u) ? `<img src="${getAvatar(u)}">` : u[0].toUpperCase()}</div>
+        <div style="flex:1"><b>${u}</b></div>
+        <div class="chk">✓</div>
+      </div>
+    `).join('');
+  }
+  document.getElementById('createModal').classList.add('show');
+}
+
+function closeCreate(){document.getElementById('createModal').classList.remove('show');}
+
+function toggleMember(u){
+  let idx = selectedMembers.indexOf(u);
+  if(idx >= 0) selectedMembers.splice(idx, 1);
+  else selectedMembers.push(u);
+  document.querySelectorAll('.member-row').forEach(el => {
+    let user = el.dataset.user;
+    el.classList.toggle('selected', selectedMembers.includes(user));
+  });
+}
+
+function createGroup(){
+  let name = document.getElementById('grpName').value.trim();
+  if(!name){ showToast('❌ Isi nama grup'); return; }
+  if(!selectedMembers.length){ showToast('❌ Pilih minimal 1 anggota'); return; }
+  let newG = {
+    id: 'G' + Date.now() + Math.random().toString(36).slice(2,6),
+    name: name,
+    members: [me, ...selectedMembers],
+    createdBy: me,
+    createdAt: Date.now()
+  };
+  groups.push(newG);
+  localStorage.setItem(GROUPS_KEY, JSON.stringify(groups));
+  closeCreate();
+  renderGroups();
+  showToast('✅ Grup dibuat!');
+  setTimeout(() => openGroup(newG.id), 500);
+}
+
+function showToast(m){
+  let t = document.getElementById('toast');
+  t.innerText = m; t.classList.add('show');
+  clearTimeout(t._tm);
+  t._tm = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+renderGroups();
+</script></body></html>

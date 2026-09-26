@@ -1,0 +1,60 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CMzChat - Room</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}:root{--g:#00a884;--p:#202C33}
+body{height:100vh;display:flex;flex-direction:column;background:#0B141A;color:#fff;font-family:Segoe UI,sans-serif}
+.h{height:60px;background:var(--p);display:flex;align-items:center;padding:0 8px;gap:8px}
+.av{width:40px;height:40px;border-radius:50%;background:#2A3942;display:grid;place-items:center}
+#m{flex:1;overflow:auto;background:#111B21;padding:10px;display:flex;flex-direction:column;gap:6px}
+.b{max-width:75%;padding:8px 10px;border-radius:8px;font-size:14px}
+.me{background:#005C4B;align-self:flex-end}
+.ot{background:#202C33;align-self:flex-start}
+.bar{height:62px;background:var(--p);display:flex;gap:8px;padding:8px;align-items:center}
+.bar input{flex:1;padding:12px;border-radius:20px;border:0;background:#2A3942;color:#fff;outline:none}
+.bar button{width:46px;height:46px;border-radius:50%;border:0;background:var(--g);color:#fff;cursor:pointer}
+</style></head><body>
+<div class="h">
+  <span onclick="location.href='dashboard.html'" style="font-size:24px;width:38px;cursor:pointer">←</span>
+  <div class="av" id="ha"></div>
+  <b id="hn" style="flex:1"></b>
+</div>
+<div id="m"></div>
+<div class="bar"><input id="inp" placeholder="Ketik..."><button onclick="kirim()">➤</button></div>
+
+<script src="env.js"></script>
+<script>
+let me = localStorage.getItem('cmz_me') || 'ceomudaz';
+let to = localStorage.getItem('cmz_active') || 'global';
+let MK = 'cmz_chat_fix';
+
+document.getElementById('hn').innerText = to === 'global' ? 'Grup Global' : to;
+document.getElementById('ha').innerText = to[0].toUpperCase();
+
+function load(){return JSON.parse(localStorage.getItem(MK) || '[]')}
+function save(a){localStorage.setItem(MK, JSON.stringify(a))}
+
+function render(){
+  let d = load(), box = document.getElementById('m');
+  box.innerHTML = '';
+  d.forEach((x, i) => {
+    if(!((to === 'global' && x.ke === 'global') || (x.dari === me && x.ke === to) || (x.dari === to && x.ke === me))) return;
+    let e = document.createElement('div');
+    e.className = 'b ' + (x.dari === me ? 'me' : 'ot');
+    e.innerHTML = x.pesan + `<br><small onclick="let D=load();D.splice(${i},1);save(D);render()" style="color:#ff8a8a;font-size:10px;cursor:pointer">hapus</small>`;
+    box.appendChild(e);
+  });
+  box.scrollTop = 99999;
+}
+
+window.kirim = function(){
+  let el = document.getElementById('inp'), t = el.value.trim();
+  if(!t) return;
+  let d = load();
+  d.push({dari:me, ke:to, pesan:t});
+  save(d);
+  el.value = '';
+  render();
+};
+
+inp.addEventListener('keydown', e => {if(e.key === 'Enter') kirim()});
+render();
+</script></body></html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>CMzChat - Pengaturan</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}:root{--g:#00a884;--g2:#06cf9c;--p:#1f2c33;--s:#8696A0}
+body{min-height:100vh;background:radial-gradient(circle at 50% 0%,#0f1e22 0%,#0B141A 40%,#05080a 100%);color:#e9edef;font-family:-apple-system,'Segoe UI',Roboto,sans-serif}
+.h{height:64px;background:linear-gradient(180deg,rgba(32,44,51,.95),rgba(32,44,51,.9));backdrop-filter:blur(20px);display:flex;align-items:center;padding:0 14px;gap:10px;position:sticky;top:0;z-index:5;border-bottom:1px solid rgba(255,255,255,.04)}
+.h .back{width:42px;height:42px;border:0;background:transparent;color:#aebac1;font-size:20px;cursor:pointer;border-radius:50%;display:grid;place-items:center}
+.h .back:active{background:rgba(255,255,255,.08)}
+.h b{font-size:17px;font-weight:600}
+.wrap{padding:16px;max-width:600px;margin:0 auto}
+.section{background:linear-gradient(180deg,rgba(32,44,51,.75),rgba(32,44,51,.4));backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.06);border-radius:18px;margin-bottom:14px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.04)}
+.section-title{padding:14px 18px 8px;font-size:11px;color:var(--g2);font-weight:700;text-transform:uppercase;letter-spacing:1.2px;display:flex;align-items:center;gap:8px}
+.section-title::before{content:'';width:3px;height:12px;background:linear-gradient(180deg,var(--g),var(--g2));border-radius:2px}
+.item{padding:16px 18px;display:flex;align-items:center;gap:14px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.03);transition:background .15s}
+.item:last-child{border-bottom:0}
+.item:active{background:rgba(255,255,255,.04)}
+.item .ic{font-size:20px;width:42px;height:42px;background:rgba(255,255,255,.04);border-radius:12px;display:grid;place-items:center;flex-shrink:0;border:1px solid rgba(255,255,255,.04)}
+.item .txt{flex:1;min-width:0}
+.item .txt b{font-size:15px;font-weight:600;color:#e9edef;display:block}
+.item .txt span{font-size:12px;color:var(--s);display:block;margin-top:2px}
+.item .arrow{color:#8696a0;font-size:18px;flex-shrink:0}
+.profile-head{padding:28px 18px;text-align:center;background:linear-gradient(135deg,rgba(0,168,132,.15) 0%,rgba(6,207,156,.05) 100%);border:1px solid rgba(6,207,156,.15);border-radius:18px;margin-bottom:14px;cursor:pointer;position:relative;overflow:hidden}
+.profile-head::before{content:'';position:absolute;top:-50%;right:-20%;width:200px;height:200px;background:radial-gradient(circle,rgba(6,207,156,.15) 0%,transparent 70%);pointer-events:none}
+.profile-av{width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,#3b4a54,#2a3942);display:grid;place-items:center;font-size:40px;font-weight:600;color:#c9d1d6;overflow:hidden;margin:0 auto 14px;border:4px solid transparent;background-image:linear-gradient(#2a3942,#2a3942),linear-gradient(135deg,var(--g),var(--g2));background-origin:border-box;background-clip:padding-box,border-box;box-shadow:0 12px 32px rgba(0,168,132,.3)}
+.profile-av img{width:100%;height:100%;object-fit:cover}
+.profile-name{font-size:19px;font-weight:700;letter-spacing:-.2px}
+.profile-sub{font-size:12.5px;color:var(--s);margin-top:6px}
+textarea,input{width:100%;background:rgba(11,20,26,.6);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:13px 15px;color:#fff;outline:none;font-family:inherit;font-size:14px;margin-top:8px;transition:all .2s}
+textarea:focus,input:focus{border-color:var(--g);box-shadow:0 0 0 4px rgba(0,168,132,.12)}
+textarea{resize:vertical;min-height:100px}
+.btn{width:100%;padding:14px;border:0;border-radius:14px;font-size:14.5px;font-weight:600;cursor:pointer;background:linear-gradient(135deg,var(--g),var(--g2));color:#fff;margin-top:10px;font-family:inherit;box-shadow:0 8px 24px rgba(0,168,132,.3)}
+.btn:active{transform:scale(.98)}
+.btn.danger{background:rgba(255,59,59,.1);color:#ff5c5c;border:1px solid rgba(255,59,59,.25);box-shadow:none}
+.btn.sec{background:rgba(255,255,255,.05);color:#fff;border:1px solid rgba(255,255,255,.08);box-shadow:none}
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:linear-gradient(135deg,var(--g),var(--g2));color:#fff;padding:13px 22px;border-radius:24px;font-size:13.5px;font-weight:600;opacity:0;transition:all .35s;z-index:999;pointer-events:none;box-shadow:0 12px 32px rgba(0,168,132,.5);max-width:90%}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.modal.show{display:flex}
+.modal-box{background:linear-gradient(180deg,#111b21,#0d161b);border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:22px;max-width:400px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,.7)}
+.modal-box h3{font-size:16px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.verified-badge{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;background:linear-gradient(135deg,#1DA1F2,#0d8de0);border-radius:50%;margin-left:5px;vertical-align:middle}
+.verified-badge svg{width:10px;height:10px;fill:#fff}
+</style></head><body>
+
+<div class="h">
+  <button class="back" onclick="location.href='dashboard.html'">←</button>
+  <b>Pengaturan</b>
+</div>
+
+<div class="wrap">
+  <div class="profile-head" onclick="location.href='profil.html'">
+    <div class="profile-av" id="profAv">?</div>
+    <div class="profile-name" id="profName">-</div>
+    <div class="profile-sub" id="profSub">-</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Akun</div>
+    <div class="item" onclick="location.href='profil.html'">
+      <div class="ic">👤</div>
+      <div class="txt"><b>Ubah Foto Profil</b><span>Ganti foto akun kamu</span></div>
+      <div class="arrow">›</div>
+    </div>
+    <div class="item" onclick="location.href='berbintang.html'">
+      <div class="ic">⭐</div>
+      <div class="txt"><b>Pesan Berbintang</b><span><span id="starCount">0</span> pesan disimpan</span></div>
+      <div class="arrow">›</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Bantuan</div>
+    <div class="item" onclick="openRequest()">
+      <div class="ic">💡</div>
+      <div class="txt"><b>Request Fitur</b><span>Usul fitur baru ke Developer</span></div>
+      <div class="arrow">›</div>
+    </div>
+    <div class="item" onclick="window.open('https://wa.me/6283121353855', '_blank')">
+      <div class="ic">💬</div>
+      <div class="txt"><b>Hubungi Developer</b><span>Chat via WhatsApp</span></div>
+      <div class="arrow">›</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Tentang</div>
+    <div class="item" style="cursor:default">
+      <div class="ic">📱</div>
+      <div class="txt"><b>CMzChat</b><span>Version 1.0 • by TZO PROJECT</span></div>
+    </div>
+  </div>
+
+  <button class="btn danger" onclick="logout()">🚪 Logout</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal" id="reqModal" onclick="if(event.target===this)closeRequest()">
+  <div class="modal-box">
+    <h3>💡 Request Fitur Baru</h3>
+    <div style="font-size:12px;color:var(--s);margin-bottom:8px">Ceritakan fitur yang kamu inginkan.</div>
+    <textarea id="reqText" placeholder="Contoh: Fitur voice note, sticker, dll..."></textarea>
+    <input id="reqName" placeholder="Nama kamu (opsional)">
+    <button class="btn" onclick="kirimRequest()">📤 Kirim ke Developer</button>
+    <button class="btn sec" onclick="closeRequest()">Batal</button>
+  </div>
+</div>
+
+<script src="env.js"></script>
+<script>
+const K = 'cmzapps_final_wa100_v7';
+const AVATAR_KEY = 'cmz_avatars_v1';
+const STARRED_KEY = 'cmz_starred_v1';
+const TELE_TOKEN = window.ENV?.TELEGRAM_TOKEN || "";
+const TELE_IDS = [window.ENV?.TELEGRAM_CHAT_ID || "", window.ENV?.TELEGRAM_CHAT_ID_2 || ""].filter(x=>x);
+
+let me = localStorage.getItem('cmz_me') || 'ceomudaz';
+let db = JSON.parse(localStorage.getItem(K) || '{"users":{}}');
+
+function getAvatar(u){try{return JSON.parse(localStorage.getItem(AVATAR_KEY)||'{}')[u]||'';}catch(e){return '';}}
+function isVer(u){try{return db.users[u]?.verified && db.users[u].verified.end>Date.now();}catch(e){return false}}
+function badge(){return '<span class="verified-badge"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span>';}
+
+function refresh(){
+  let av = getAvatar(me);
+  let el = document.getElementById('profAv');
+  el.innerHTML = av ? `<img src="${av}">` : me[0].toUpperCase();
+  document.getElementById('profName').innerHTML = me + (isVer(me)?badge():'');
+  let role = me === 'ceomudaz' ? 'Developer' : (db.users[me]?.role || 'User');
+  document.getElementById('profSub').innerText = '@' + me + ' • ' + role;
+  try { let s = JSON.parse(localStorage.getItem(STARRED_KEY)||'[]'); document.getElementById('starCount').innerText = s.length; } catch(e){}
+}
+
+function openRequest(){document.getElementById('reqModal').classList.add('show'); document.getElementById('reqName').value = me;}
+function closeRequest(){document.getElementById('reqModal').classList.remove('show');}
+
+function kirimRequest(){
+  let txt = document.getElementById('reqText').value.trim();
+  let nama = document.getElementById('reqName').value.trim() || me;
+  if(!txt){ showToast('❌ Tulis dulu request kamu'); return; }
+  if(!TELE_TOKEN || !TELE_IDS.length){ showToast('❌ Token Telegram belum diisi'); return; }
+  let pesan = `💡 REQUEST FITUR BARU\n━━━━━━━━━━━━━━━━━━\n👤 Pengirim: @${nama}\n🎯 User: @${me}\n📝 Pesan:\n${txt}\n━━━━━━━━━━━━━━━━━━\n⏰ ${new Date().toLocaleString('id-ID')}`;
+  TELE_IDS.forEach(id => fetch(`https://api.telegram.org/bot${TELE_TOKEN}/sendMessage?chat_id=${id}&text=${encodeURIComponent(pesan)}`).catch(()=>{}));
+  document.getElementById('reqText').value = '';
+  closeRequest();
+  showToast('✅ Request terkirim! Terima kasih 💚');
+}
+
+function logout(){if(!confirm('Logout dari akun ' + me + '?')) return; localStorage.removeItem('cmz_me'); location.href = 'login.html';}
+function showToast(m){let t = document.getElementById('toast'); t.innerText = m; t.classList.add('show'); clearTimeout(t._tm); t._tm = setTimeout(() => t.classList.remove('show'), 2500);}
+refresh();
+window.addEventListener('focus', refresh);
+</script></body></html>

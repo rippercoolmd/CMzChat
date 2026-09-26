@@ -1,0 +1,39 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>CMzChat - Landing</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--g:#00a884;--g2:#06cf9c;--bg:#0a0f14}
+html,body{height:100%;overflow:hidden}
+body{background:radial-gradient(circle at 50% 40%,#0f1a22 0%,#0a0f14 60%,#05080a 100%);color:#fff;font-family:-apple-system,'Segoe UI',Roboto,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;transition:opacity .5s}
+body::before{content:'';position:absolute;width:500px;height:500px;background:radial-gradient(circle,rgba(0,168,132,.15) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;animation:pulse 3s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.6}50%{transform:translate(-50%,-50%) scale(1.15);opacity:1}}
+.logo-wrap{position:relative;z-index:1;animation:floatIn .8s cubic-bezier(.4,0,.2,1)}
+@keyframes floatIn{from{opacity:0;transform:translateY(30px) scale(.9)}to{opacity:1;transform:translateY(0) scale(1)}}
+.logo{width:130px;height:130px;border-radius:32px;background:linear-gradient(135deg,#fff 0%,#e8f4f0 100%);padding:12px;box-shadow:0 30px 80px rgba(0,168,132,.4),0 0 0 1px rgba(255,255,255,.1),inset 0 0 40px rgba(0,168,132,.05);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.logo::before{content:'';position:absolute;inset:0;background:linear-gradient(45deg,transparent 30%,rgba(0,168,132,.15) 50%,transparent 70%);animation:shine 3s linear infinite}
+@keyframes shine{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.logo img{width:100%;height:100%;object-fit:contain;position:relative;z-index:1}
+.brand{margin-top:28px;text-align:center;position:relative;z-index:1}
+.brand h1{font-size:30px;font-weight:700;letter-spacing:-.5px;background:linear-gradient(135deg,#fff 0%,#06cf9c 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.brand p{font-size:12px;color:rgba(255,255,255,.4);margin-top:6px;letter-spacing:3px;text-transform:uppercase;font-weight:600}
+.loader{margin-top:36px;width:180px;height:3px;background:rgba(255,255,255,.06);border-radius:10px;overflow:hidden;position:relative;z-index:1}
+.loader-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--g),var(--g2));border-radius:10px;animation:load 2.4s cubic-bezier(.4,0,.2,1) forwards;box-shadow:0 0 16px rgba(6,207,156,.8)}
+@keyframes load{to{width:100%}}
+.dots{margin-top:18px;display:flex;gap:6px;justify-content:center;z-index:1}
+.dots span{width:6px;height:6px;background:rgba(255,255,255,.2);border-radius:50%;animation:bounce 1.4s ease-in-out infinite}
+.dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);background:rgba(255,255,255,.2)}30%{transform:translateY(-8px);background:var(--g2)}}
+.footer{position:absolute;bottom:40px;left:0;right:0;text-align:center;z-index:1;animation:fadeUp 1s ease-out .4s both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.footer h3{font-size:11px;letter-spacing:4px;color:rgba(255,255,255,.35);font-weight:600;text-transform:uppercase}
+.footer p{font-size:10px;color:rgba(255,255,255,.2);margin-top:6px;letter-spacing:2px}
+.fade{opacity:0}
+</style></head><body id="body">
+<div class="logo-wrap"><div class="logo"><img src="Logo.jpg" alt="CMzChat" onerror="this.style.display='none';this.parentNode.innerHTML='<span style=\'font-size:44px;font-weight:800;color:#00a884\'>C</span>'"></div></div>
+<div class="brand"><h1>CMzChat</h1><p>Premium Messaging</p></div>
+<div class="loader"><div class="loader-bar"></div></div>
+<div class="dots"><span></span><span></span><span></span></div>
+<div class="footer"><h3>From TZO Project</h3><p>© 2026</p></div>
+<script>
+setTimeout(() => document.getElementById('body').classList.add('fade'), 2400);
+setTimeout(() => window.location.href = "daftar.html", 2900);
+</script></body></html>

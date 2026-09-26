@@ -1,0 +1,184 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CMzChat - Status</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}:root{--g:#00a884;--p:#202C33;--s:#8696A0;--bg:#0B141A}
+body{height:100vh;display:flex;flex-direction:column;background:var(--bg);color:#fff;font-family:-apple-system,'Segoe UI',Roboto,sans-serif}
+.h{height:60px;background:var(--p);display:flex;align-items:center;padding:0 14px;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.h b{font-size:17px}
+.box{background:var(--p);margin:12px;border-radius:14px;padding:16px}
+input,textarea{width:100%;background:#2A3942;border:0;border-radius:10px;padding:13px;color:#fff;outline:none;margin-top:10px;font-family:inherit}
+button{width:100%;background:var(--g);border:0;border-radius:12px;padding:14px;color:#fff;font-weight:700;margin-top:12px;cursor:pointer}
+button.sec{background:#2A3942}button.small{width:auto;padding:6px 12px;font-size:12px;margin:4px}
+.status-card{background:#1f2c33;border-radius:14px;margin:10px 12px;padding:14px;border:1px solid #ffffff0a}
+.status-foto{width:100%;max-height:380px;object-fit:contain;border-radius:12px;margin-top:10px;background:#000}
+.upload{border:1.5px dashed #3a4a52;border-radius:10px;padding:14px;text-align:center;margin-top:10px;cursor:pointer;color:var(--s);font-size:12px}
+.upload img{max-width:100%;max-height:200px;border-radius:10px;margin-top:8px;display:none}
+.verified-badge{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;background:#1DA1F2;border-radius:50%;margin-left:5px;vertical-align:middle}
+.verified-badge svg{width:10px;height:10px;fill:#fff}
+.content{flex:1;overflow:auto;background:#111B21}
+
+/* ===== PREMIUM BOTTOM NAV ===== */
+.bottom{
+  height:72px;
+  background:linear-gradient(180deg,#1a252c 0%,#202C33 60%,#1f2a31 100%);
+  display:flex;border-top:1px solid rgba(255,255,255,0.05);flex-shrink:0;position:relative;
+  box-shadow:0 -12px 40px rgba(0,0,0,0.5);padding:0 4px 4px;gap:2px;
+}
+.bottom::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(6,207,156,0.3),transparent);}
+.bnav{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  color:#6b7785;font-size:9.5px;font-weight:600;letter-spacing:.3px;text-decoration:none;
+  position:relative;border-radius:16px;margin:6px 3px 4px;transition:all .3s cubic-bezier(.4,0,.2,1);
+  overflow:hidden;-webkit-tap-highlight-color:transparent;
+}
+.bnav::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 30%, rgba(0,168,132,.18), transparent 70%);opacity:0;transition:opacity .35s;border-radius:16px;}
+.bnav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;transition:all .3s cubic-bezier(.4,0,.2,1);z-index:1;position:relative;}
+.bnav span{font-size:9.5px;font-weight:600;letter-spacing:.3px;z-index:1;position:relative;transition:all .3s;text-transform:uppercase;}
+.bnav.active{color:#06cf9c;background:linear-gradient(180deg,rgba(0,168,132,.14),rgba(0,168,132,.02));}
+.bnav.active::before{opacity:1;}
+.bnav.active::after{
+  content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:32px;height:3px;
+  background:linear-gradient(90deg,transparent,#06cf9c,transparent);border-radius:0 0 6px 6px;
+  box-shadow:0 0 14px #06cf9c,0 0 4px #06cf9c;animation:navIndicator .35s cubic-bezier(.4,0,.2,1);
+}
+@keyframes navIndicator{from{width:0;opacity:0;}to{width:32px;opacity:1;}}
+.bnav.active svg{transform:scale(1.12) translateY(-1px);filter:drop-shadow(0 0 8px rgba(6,207,156,.6));}
+.bnav:active svg{transform:scale(.85);transition:transform .12s;}
+.bnav .ripple{position:absolute;border-radius:50%;background:rgba(6,207,156,.35);transform:scale(0);animation:rippleAnim .55s ease-out;pointer-events:none;}
+@keyframes rippleAnim{to{transform:scale(3.5);opacity:0;}}
+</style></head><body>
+
+<div class="h"><b>⭕ Status</b><span id="myName" style="margin-left:auto;font-size:11px;color:var(--s)"></span></div>
+
+<div class="content">
+  <div class="box"><b>➕ Buat Status 24 jam</b><textarea id="stText" rows="2" placeholder="Tulis teks..."></textarea>
+    <div class="upload" onclick="document.getElementById('stFoto').click()"><span id="upText">📷 Tambah Foto</span><img id="preview"><input type="file" id="stFoto" accept="image/*" style="display:none"></div>
+    <button onclick="postStatus()">Posting Status</button>
+    <div id="msgSt" style="font-size:12px;margin-top:8px;color:var(--g)"></div>
+  </div>
+  <div id="listStatus"></div>
+</div>
+
+<div class="bottom">
+  <a href="dashboard.html" class="bnav" data-nav>
+    <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+    <span>Chat</span>
+  </a>
+  <a href="status.html" class="bnav active" data-nav>
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    <span>Status</span>
+  </a>
+  <a href="informasi.html" class="bnav" data-nav>
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="11"/><circle cx="12" cy="8" r="1" fill="currentColor"/></svg>
+    <span>Info</span>
+  </a>
+  <a href="fitur.html" class="bnav" data-nav>
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span>Fitur</span>
+  </a>
+</div>
+
+<script src="env.js"></script>
+<script>
+const K = 'cmzapps_final_wa100_v7';
+const ST_KEY = 'cmz_status_v2';
+const AVATAR_KEY = 'cmz_avatars_v1';
+let me = localStorage.getItem('cmz_me') || 'ceomudaz';
+let db = JSON.parse(localStorage.getItem(K) || '{"users":{}}');
+let statusList = JSON.parse(localStorage.getItem(ST_KEY) || '[]');
+let fotoBase64 = '';
+
+function getAvatar(u){try{return JSON.parse(localStorage.getItem(AVATAR_KEY)||'{}')[u]||'';}catch(e){return '';}}
+
+document.getElementById('myName').innerText = me;
+function isVer(u){try{return db.users[u]?.verified && db.users[u].verified.end > Date.now()}catch(e){return false}}
+function badge(){return '<span class="verified-badge"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span>';}
+
+document.getElementById('stFoto').addEventListener('change', function(e){
+  let f = e.target.files[0]; if(!f) return;
+  let r = new FileReader();
+  r.onload = function(ev){
+    fotoBase64 = ev.target.result;
+    let img = document.getElementById('preview');
+    img.src = fotoBase64; img.style.display = 'block';
+    document.getElementById('upText').innerText = '✅ Foto siap';
+  };
+  r.readAsDataURL(f);
+});
+
+function clean(){
+  let now = Date.now();
+  statusList = statusList.filter(s => now - s.time < 86400000);
+  localStorage.setItem(ST_KEY, JSON.stringify(statusList));
+}
+clean();
+
+function postStatus(){
+  let t = document.getElementById('stText').value.trim();
+  if(!t && !fotoBase64){document.getElementById('msgSt').innerText = 'Isi teks/foto'; return;}
+  statusList.unshift({id:Date.now(), by:me, teks:t, foto:fotoBase64, time:Date.now(), likes:[], views:[]});
+  localStorage.setItem(ST_KEY, JSON.stringify(statusList));
+  document.getElementById('stText').value = '';
+  fotoBase64 = '';
+  document.getElementById('preview').style.display = 'none';
+  document.getElementById('upText').innerText = '📷 Tambah Foto';
+  render();
+}
+
+function likeStatus(id){
+  let s = statusList.find(x => x.id === id);
+  if(s.likes.includes(me)) s.likes = s.likes.filter(x => x !== me);
+  else s.likes.push(me);
+  localStorage.setItem(ST_KEY, JSON.stringify(statusList));
+  render();
+}
+function viewStatus(id){
+  let s = statusList.find(x => x.id === id);
+  if(!s.views.includes(me)){s.views.push(me); localStorage.setItem(ST_KEY, JSON.stringify(statusList));}
+}
+function deleteStatus(id){
+  let s = statusList.find(x => x.id === id);
+  if(s.by !== me) return;
+  if(confirm('Hapus?')){
+    statusList = statusList.filter(x => x.id !== id);
+    localStorage.setItem(ST_KEY, JSON.stringify(statusList));
+    render();
+  }
+}
+
+function render(){
+  clean();
+  let el = document.getElementById('listStatus');
+  if(!statusList.length){el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--s)">Belum ada status</div>'; return;}
+  el.innerHTML = statusList.map(s => {
+    let isMe = s.by === me;
+    if(!isMe) viewStatus(s.id);
+    let liked = s.likes.includes(me);
+    let av = getAvatar(s.by);
+    let avHTML = av ? `<img src="${av}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : s.by[0].toUpperCase();
+    return `<div class="status-card"><div style="display:flex;justify-content:space-between"><div style="display:flex;gap:10px;align-items:center"><div style="width:40px;height:40px;background:var(--g);border-radius:50%;display:grid;place-items:center;overflow:hidden">${avHTML}</div><div><b style="display:flex;align-items:center">${s.by}${isVer(s.by)?badge():''}${isMe?' (Kamu)':''}</b><div style="font-size:10px;color:var(--s)">${new Date(s.time).toLocaleTimeString('id-ID')}</div></div></div>${isMe?`<button class="small sec" style="background:#ff3b3b" onclick="deleteStatus(${s.id})">Hapus</button>`:''}</div>${s.teks?`<div style="margin-top:8px;white-space:pre-wrap">${s.teks}</div>`:''}${s.foto?`<img src="${s.foto}" class="status-foto">`:''}<div style="display:flex;gap:8px;margin-top:10px"><button class="small ${liked?'':'sec'}" style="${liked?'background:#ff3b3b':''}" onclick="likeStatus(${s.id})">${liked?'❤️':'🤍'} ${s.likes.length}</button><span style="font-size:11px;color:var(--s);margin-top:8px">👁️ ${s.views.length}</span></div>${isMe?`<div style="background:#2A3942;border-radius:10px;padding:10px;margin-top:10px;font-size:12px"><b>Dilihat:</b> ${s.views.join(', ')||'Belum'}<br><b>Like:</b> ${s.likes.join(', ')||'Belum'}</div>`:''}</div>`;
+  }).join('');
+}
+render();
+
+// Ripple effect
+document.querySelectorAll('[data-nav]').forEach(el => {
+  el.addEventListener('touchstart', function(e){
+    let rect = this.getBoundingClientRect(); let touch = e.touches[0];
+    let ripple = document.createElement('span'); ripple.className = 'ripple';
+    let size = Math.max(rect.width, rect.height);
+    ripple.style.width = ripple.style.height = size + 'px';
+    ripple.style.left = (touch.clientX - rect.left - size/2) + 'px';
+    ripple.style.top = (touch.clientY - rect.top - size/2) + 'px';
+    this.appendChild(ripple); setTimeout(() => ripple.remove(), 600);
+  }, {passive:true});
+  el.addEventListener('mousedown', function(e){
+    let rect = this.getBoundingClientRect();
+    let ripple = document.createElement('span'); ripple.className = 'ripple';
+    let size = Math.max(rect.width, rect.height);
+    ripple.style.width = ripple.style.height = size + 'px';
+    ripple.style.left = (e.clientX - rect.left - size/2) + 'px';
+    ripple.style.top = (e.clientY - rect.top - size/2) + 'px';
+    this.appendChild(ripple); setTimeout(() => ripple.remove(), 600);
+  });
+});
+</script></body></html>
