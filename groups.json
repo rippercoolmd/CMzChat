@@ -1,1 +1,12 @@
-{"groups":[]}
+{
+  "groups": [
+    {
+      "id": "GLOBAL",
+      "name": "Global CMzChat",
+      "isGlobal": true,
+      "createdBy": "system",
+      "createdAt": 0,
+      "members": ["ceomudaz", "Fajars"]
+    }
+  ]
+}
