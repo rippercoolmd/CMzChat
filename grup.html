@@ -106,23 +106,62 @@ let db = { users: {} };
 let groups = [];
 let selectedMembers = [];
 
-function toast(m, err){const t=document.getElementById('toast');t.textContent=m;t.className='toast show '+(err?'err':'gold');clearTimeout(t._tm);t._tm=setTimeout(()=>t.classList.remove('show'),2200);}
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function toast(m, err){
+  const t = document.getElementById('toast');
+  t.textContent = m;
+  t.className = 'toast show ' + (err ? 'err' : 'gold');
+  clearTimeout(t._tm);
+  t._tm = setTimeout(() => t.classList.remove('show'), 2200);
+}
+function esc(s){
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
 
 async function init(){
+  // Load user
   db = await readDB("database.json", { users: {} });
-  await ensureGlobalGroup();
-  const g = await readDB("groups.json", { groups: [] });
-  groups = g.groups || [];
 
-  // Sync global members = semua user terdaftar
-  const gg = groups.find(x => x.id === GLOBAL_ID);
-  if(gg){
-    const allUsers = Object.keys(db.users || {});
-    if(gg.members.length !== allUsers.length || !allUsers.every(u => gg.members.includes(u))){
-      gg.members = allUsers;
-      await writeDB("groups.json", { groups });
-    }
+  // Sync avatars
+  const av = await readDB("avatars.json", { avatars: {} });
+  localStorage.setItem('cmz_avatars_v1', JSON.stringify(av.avatars || {}));
+
+  // Pastikan Global Group ada
+  await ensureGlobalGroup();
+
+  // Baca groups
+  let g = await readDB("groups.json", { groups: [] });
+  if(!g.groups) g.groups = [];
+
+  // Cari GLOBAL — kalau tidak ada, buat
+  let gg = g.groups.find(x => x.id === GLOBAL_ID);
+  if(!gg){
+    console.warn("[CMzChat] Buat Global Group...");
+    gg = {
+      id: GLOBAL_ID,
+      name: "Global CMzChat",
+      isGlobal: true,
+      createdBy: "system",
+      createdAt: 0,
+      members: []
+    };
+    g.groups.unshift(gg);
+  }
+
+  // Sync members = semua user terdaftar
+  const allUsers = Object.keys(db.users || {});
+  const needSync = gg.members.length !== allUsers.length ||
+                   !allUsers.every(u => gg.members.includes(u));
+
+  if(needSync){
+    gg.members = allUsers;
+    await writeDB("groups.json", g);
+    // Re-read biar sinkron
+    const g2 = await readDB("groups.json", { groups: [] });
+    groups = g2.groups || [];
+  } else {
+    groups = g.groups;
   }
 
   renderGlobal();
@@ -137,44 +176,46 @@ function renderGlobal(){
   }
   const admins = Object.keys(db.users).filter(u => db.users[u].role === 'Developer');
   const adminNames = admins.map(a => '@' + a).join(', ');
-  el.innerHTML = `
-    <div class="grp global" onclick="openGroup('${GLOBAL_ID}')">
-      <div class="grp-av">🌐</div>
-      <div class="grp-info">
-        <div class="grp-name">
-          Global CMzChat
-          <span class="lock-badge">🔒 WAJIB</span>
-        </div>
-        <div class="grp-sub">
-          👑 Admin: ${esc(adminNames) || 'system'}
-        </div>
-        <div class="grp-sub">
-          ${Object.keys(db.users).length} anggota • semua user otomatis masuk
-        </div>
-      </div>
-    </div>`;
+  el.innerHTML =
+    '<div class="grp global" onclick="openGroup(\'' + GLOBAL_ID + '\')">' +
+      '<div class="grp-av">🌐</div>' +
+      '<div class="grp-info">' +
+        '<div class="grp-name">' +
+          'Global CMzChat' +
+          ' <span class="lock-badge">🔒 WAJIB</span>' +
+        '</div>' +
+        '<div class="grp-sub">' +
+          '👑 Admin: ' + (esc(adminNames) || 'system') +
+        '</div>' +
+        '<div class="grp-sub">' +
+          Object.keys(db.users).length + ' anggota • semua user otomatis masuk' +
+        '</div>' +
+      '</div>' +
+    '</div>';
 }
 
 function renderGroups(){
   const el = document.getElementById('listGrup');
   const myGroups = groups.filter(g => !g.isGlobal && isMemberOf(g, me, db));
   if(!myGroups.length){
-    el.innerHTML = `<div class="empty"><div class="em">👥</div><b>Belum ada grup lain</b>Tekan tombol + untuk buat grup</div>`;
+    el.innerHTML = '<div class="empty"><div class="em">👥</div><b>Belum ada grup lain</b>Tekan tombol + untuk buat grup</div>';
     return;
   }
   el.innerHTML = myGroups.map(g => {
     const admin = g.createdBy || 'system';
-    return `<div class="grp" onclick="openGroup('${g.id}')">
-      <div class="grp-av">👥</div>
-      <div class="grp-info">
-        <div class="grp-name">${esc(g.name)}</div>
-        <div class="grp-sub">👑 @${esc(admin)} • ${g.members.length} anggota</div>
-      </div>
-    </div>`;
+    return '<div class="grp" onclick="openGroup(\'' + g.id + '\')">' +
+      '<div class="grp-av">👥</div>' +
+      '<div class="grp-info">' +
+        '<div class="grp-name">' + esc(g.name) + '</div>' +
+        '<div class="grp-sub">👑 @' + esc(admin) + ' • ' + g.members.length + ' anggota</div>' +
+      '</div>' +
+    '</div>';
   }).join('');
 }
 
-function openGroup(id){ location.href = 'grup-chat.html?id=' + id; }
+function openGroup(id){
+  location.href = 'grup-chat.html?id=' + encodeURIComponent(id);
+}
 
 function openCreate(){
   selectedMembers = [];
@@ -186,12 +227,12 @@ function openCreate(){
   } else {
     el.innerHTML = users.map(u => {
       const av = SESSION.avatar[u];
-      const inner = av ? `<img src="${av}">` : u[0].toUpperCase();
-      return `<div class="member-row" data-user="${u}" onclick="toggleMember('${u}')">
-        <div class="av-sm">${inner}</div>
-        <div style="flex:1;font-weight:600">${esc(u)}</div>
-        <div class="chk">✓</div>
-      </div>`;
+      const inner = av ? '<img src="' + av + '">' : u[0].toUpperCase();
+      return '<div class="member-row" data-user="' + u + '" onclick="toggleMember(\'' + u + '\')">' +
+        '<div class="av-sm">' + inner + '</div>' +
+        '<div style="flex:1;font-weight:600">' + esc(u) + '</div>' +
+        '<div class="chk">✓</div>' +
+      '</div>';
     }).join('');
   }
   document.getElementById('createModal').classList.add('show');
@@ -214,8 +255,8 @@ async function createGroup(){
 
   const newG = {
     id: 'G' + Date.now() + Math.random().toString(36).slice(2,6),
-    name,
-    members: [me, ...selectedMembers],
+    name: name,
+    members: [me].concat(selectedMembers),
     admins: [me],
     createdBy: me,
     createdAt: Date.now()
@@ -227,15 +268,15 @@ async function createGroup(){
   await writeDB("groups.json", g);
 
   cloneToTelegram("👥", "GRUP BARU DIBUAT", [
-    `📛 Nama: <b>${esc(name)}</b>`,
-    `👤 Creator: @${me}`,
-    `👥 Anggota: ${newG.members.map(u=>'@'+u).join(', ')}`,
-    `🔑 <code>${newG.id}</code>`
+    "📛 Nama: <b>" + esc(name) + "</b>",
+    "👤 Creator: @" + me,
+    "👥 Anggota: " + newG.members.map(u=>'@'+u).join(', '),
+    "🔑 <code>" + newG.id + "</code>"
   ]);
 
   closeCreate();
   toast('✅ Grup dibuat!');
-  setTimeout(()=>openGroup(newG.id), 500);
+  setTimeout(()=>openGroup(newG.id), 600);
 }
 
 init();
