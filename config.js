@@ -1,149 +1,256 @@
-// config.js - Core DB & Telegram + Global Group
-const CFG = {
-  TOKEN: window.ENV?.GITHUB_TOKEN || "",
-  REPO:  window.ENV?.GITHUB_REPO  || "",
-  BRANCH: window.ENV?.GITHUB_BRANCH || "main",
-  TG_TOKEN: window.ENV?.TELEGRAM_TOKEN || "",
-  TG_IDS: [window.ENV?.TELEGRAM_CHAT_ID, window.ENV?.TELEGRAM_CHAT_ID_2].filter(Boolean)
+// config.js - Core DB + Telegram + Global Group (FIX CACHE VERSION)
+var CFG = {
+  TOKEN: (window.ENV && window.ENV.GITHUB_TOKEN) || "",
+  REPO:  (window.ENV && window.ENV.GITHUB_REPO)  || "",
+  BRANCH: (window.ENV && window.ENV.GITHUB_BRANCH) || "main",
+  TG_TOKEN: (window.ENV && window.ENV.TELEGRAM_TOKEN) || "",
+  TG_IDS: []
 };
+if (window.ENV && window.ENV.TELEGRAM_CHAT_ID) CFG.TG_IDS.push(window.ENV.TELEGRAM_CHAT_ID);
+if (window.ENV && window.ENV.TELEGRAM_CHAT_ID_2) CFG.TG_IDS.push(window.ENV.TELEGRAM_CHAT_ID_2);
 
-const API = `https://api.github.com/repos/${CFG.REPO}/contents/`;
-const RAW = `https://raw.githubusercontent.com/${CFG.REPO}/${CFG.BRANCH}/`;
+var API = "https://api.github.com/repos/" + CFG.REPO + "/contents/";
+var RAW = "https://raw.githubusercontent.com/" + CFG.REPO + "/" + CFG.BRANCH + "/";
 
-const HEADERS = {
-  Authorization: `token ${CFG.TOKEN}`,
-  Accept: "application/vnd.github.v3+json",
+var HEADERS = {
+  "Authorization": "token " + CFG.TOKEN,
+  "Accept": "application/vnd.github.v3+json",
   "Content-Type": "application/json"
 };
 
-// ===== READ =====
-async function readDB(file, fallback = {}) {
-  try {
-    const r = await fetch(RAW + file + "?t=" + Date.now(), { cache: "no-store" });
-    if (!r.ok) return fallback;
-    const text = await r.text();
-    if (!text) return fallback;
-    return JSON.parse(text);
-  } catch (e) { console.warn("readDB:", file, e); return fallback; }
+// ===== DEBUG =====
+console.log("[CMzChat] Config loaded:", {
+  repo: CFG.REPO,
+  branch: CFG.BRANCH,
+  tokenOK: !!CFG.TOKEN,
+  tgOK: !!CFG.TG_TOKEN
+});
+
+if (!CFG.TOKEN) console.error("[CMzChat] GITHUB_TOKEN kosong! Cek env.js");
+if (!CFG.REPO) console.error("[CMzChat] GITHUB_REPO kosong! Cek env.js");
+if (!CFG.BRANCH) console.error("[CMzChat] GITHUB_BRANCH kosong! Cek env.js");
+
+// ===== READ (via GitHub API - no cache) =====
+function readDB(file, fallback) {
+  if (fallback === undefined) fallback = {};
+  return fetch(API + file + "?t=" + Date.now(), {
+    headers: {
+      "Authorization": "token " + CFG.TOKEN,
+      "Accept": "application/vnd.github.raw",
+      "Cache-Control": "no-cache"
+    },
+    cache: "no-store"
+  })
+  .then(function(r) {
+    if (!r.ok) {
+      console.warn("[CMzChat] readDB " + file + " HTTP " + r.status);
+      return fallback;
+    }
+    return r.text();
+  })
+  .then(function(text) {
+    if (!text || text.trim() === "") return fallback;
+    try { return JSON.parse(text); }
+    catch (e) {
+      console.error("[CMzChat] readDB " + file + " JSON parse error: " + e.message);
+      return fallback;
+    }
+  })
+  .catch(function(e) {
+    console.error("[CMzChat] readDB " + file + " error: " + e.message);
+    return fallback;
+  });
 }
 
 // ===== WRITE =====
-async function writeDB(file, data, retry = 2) {
-  try {
-    let sha = null;
-    const g = await fetch(API + file + "?t=" + Date.now(), { headers: HEADERS, cache: "no-store" });
-    if (g.ok) { const j = await g.json(); sha = j.sha; }
-
-    const body = {
-      message: `update ${file} @ ${new Date().toISOString()}`,
-      content: btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2)))),
-      branch: CFG.BRANCH
-    };
-    if (sha) body.sha = sha;
-
-    const p = await fetch(API + file, {
-      method: "PUT",
-      headers: HEADERS,
-      body: JSON.stringify(body)
+function writeDB(file, data, retry) {
+  if (retry === undefined) retry = 2;
+  if (!CFG.TOKEN) {
+    console.error("[CMzChat] writeDB: token kosong");
+    return Promise.resolve(false);
+  }
+  var sha = null;
+  return fetch(API + file + "?t=" + Date.now(), { headers: HEADERS, cache: "no-store" })
+    .then(function(g) {
+      if (g.ok) {
+        return g.json().then(function(j) { sha = j.sha; });
+      }
+      if (g.status !== 404) {
+        console.error("[CMzChat] writeDB " + file + " GET sha failed: " + g.status);
+      }
+    })
+    .then(function() {
+      var body = {
+        message: "update " + file + " @ " + new Date().toISOString(),
+        content: btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2)))),
+        branch: CFG.BRANCH
+      };
+      if (sha) body.sha = sha;
+      return fetch(API + file, {
+        method: "PUT",
+        headers: HEADERS,
+        body: JSON.stringify(body)
+      });
+    })
+    .then(function(p) {
+      if (!p.ok) {
+        return p.text().then(function(t) {
+          console.error("[CMzChat] writeDB " + file + " PUT " + p.status + ": " + t.slice(0, 200));
+          if (retry > 0) {
+            return new Promise(function(res) { setTimeout(res, 800); })
+              .then(function() { return writeDB(file, data, retry - 1); });
+          }
+          return false;
+        });
+      }
+      console.log("[CMzChat] writeDB " + file + " ok");
+      return true;
+    })
+    .catch(function(e) {
+      console.error("[CMzChat] writeDB " + file + " error: " + e.message);
+      return false;
     });
-
-    if (!p.ok && retry > 0) {
-      await new Promise(r => setTimeout(r, 800));
-      return writeDB(file, data, retry - 1);
-    }
-    return p.ok;
-  } catch (e) { console.error("writeDB:", file, e); return false; }
 }
 
 // ===== CHAT PUSH =====
-async function pushChatMsg(chatKey, msg) {
-  const db = await readDB("chats.json", { chats: {} });
-  if (!db.chats) db.chats = {};
-  if (!db.chats[chatKey]) db.chats[chatKey] = [];
-  db.chats[chatKey].push(msg);
-  if (db.chats[chatKey].length > 500) db.chats[chatKey] = db.chats[chatKey].slice(-500);
-  return await writeDB("chats.json", db);
+function pushChatMsg(chatKey, msg) {
+  return readDB("chats.json", { chats: {} }).then(function(db) {
+    if (!db.chats) db.chats = {};
+    if (!db.chats[chatKey]) db.chats[chatKey] = [];
+    db.chats[chatKey].push(msg);
+    if (db.chats[chatKey].length > 500) db.chats[chatKey] = db.chats[chatKey].slice(-500);
+    return writeDB("chats.json", db);
+  });
 }
 
 // ===== TELEGRAM CLONE =====
-async function cloneToTelegram(icon, title, lines) {
-  if (!CFG.TG_TOKEN || !CFG.TG_IDS.length) return;
-  const text = `${icon} ${title}\n━━━━━━━━━━━━━━━━━\n${lines.filter(Boolean).join("\n")}\n━━━━━━━━━━━━━━━━━\n🕒 ${new Date().toLocaleString("id-ID")}`;
-  await Promise.all(CFG.TG_IDS.map(id =>
-    fetch(`https://api.telegram.org/bot${CFG.TG_TOKEN}/sendMessage`, {
+function cloneToTelegram(icon, title, lines) {
+  if (!CFG.TG_TOKEN || !CFG.TG_IDS.length) {
+    console.warn("[CMzChat] Telegram not configured");
+    return Promise.resolve();
+  }
+  var cleanLines = (lines || []).filter(function(x) { return !!x; });
+  var text = icon + " " + title + "\n-----------------------------------\n" + cleanLines.join("\n") + "\n-----------------------------------\n" + new Date().toLocaleString("id-ID");
+  var jobs = CFG.TG_IDS.map(function(id) {
+    return fetch("https://api.telegram.org/bot" + CFG.TG_TOKEN + "/sendMessage", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: id, text, parse_mode: "HTML", disable_web_page_preview: true })
-    }).catch(() => {})
-  ));
+      body: JSON.stringify({
+        chat_id: id,
+        text: text,
+        parse_mode: "HTML",
+        disable_web_page_preview: true
+      })
+    }).catch(function() {});
+  });
+  return Promise.all(jobs);
 }
 
 // ===== USER HELPERS =====
-async function getUser(username) {
-  const db = await readDB("database.json", { users: {} });
-  return db.users?.[username] || null;
+function getUser(username) {
+  return readDB("database.json", { users: {} }).then(function(db) {
+    return (db.users && db.users[username]) || null;
+  });
 }
 
-async function saveUser(username, data) {
-  const db = await readDB("database.json", { users: {} });
-  if (!db.users) db.users = {};
-  db.users[username] = { ...(db.users[username] || {}), ...data };
-  return await writeDB("database.json", db);
+function saveUser(username, data) {
+  return readDB("database.json", { users: {} }).then(function(db) {
+    if (!db.users) db.users = {};
+    var existing = db.users[username] || {};
+    var merged = {};
+    var k;
+    for (k in existing) merged[k] = existing[k];
+    for (k in data) merged[k] = data[k];
+    db.users[username] = merged;
+    return writeDB("database.json", db);
+  });
 }
 
 // ===== SESSION =====
-const SESSION = {
+var SESSION = {
   get me() { return localStorage.getItem("cmz_me") || null; },
-  set me(v) { v ? localStorage.setItem("cmz_me", v) : localStorage.removeItem("cmz_me"); },
+  set me(v) { if (v) localStorage.setItem("cmz_me", v); else localStorage.removeItem("cmz_me"); },
   get avatar() {
-    try { return JSON.parse(localStorage.getItem("cmz_avatars_v1") || "{}"); } catch { return {}; }
+    try { return JSON.parse(localStorage.getItem("cmz_avatars_v1") || "{}"); }
+    catch (e) { return {}; }
   },
-  setAvatar(u, b64) {
-    const a = SESSION.avatar;
+  setAvatar: function(u, b64) {
+    var a = SESSION.avatar;
     if (b64) a[u] = b64; else delete a[u];
     localStorage.setItem("cmz_avatars_v1", JSON.stringify(a));
   }
 };
 
-// ===== GLOBAL GROUP HELPERS =====
-const GLOBAL_ID = "GLOBAL";
+// ===== GLOBAL GROUP =====
+var GLOBAL_ID = "GLOBAL";
 
-async function ensureGlobalGroup(){
-  const g = await readDB("groups.json", { groups: [] });
-  if(!g.groups) g.groups = [];
-
-  let gg = g.groups.find(x => x.id === GLOBAL_ID);
-  if(!gg){
-    gg = {
-      id: GLOBAL_ID,
-      name: "🌐 Global CMzChat",
-      isGlobal: true,
-      createdBy: "system",
-      createdAt: 0,
-      members: []
-    };
-    g.groups.unshift(gg);
-    await writeDB("groups.json", g);
-  }
-  return gg;
+function ensureGlobalGroup() {
+  return readDB("groups.json", { groups: [] }).then(function(g) {
+    if (!g.groups) g.groups = [];
+    var gg = null;
+    for (var i = 0; i < g.groups.length; i++) {
+      if (g.groups[i].id === GLOBAL_ID) { gg = g.groups[i]; break; }
+    }
+    if (!gg) {
+      gg = {
+        id: GLOBAL_ID,
+        name: "Global CMzChat",
+        isGlobal: true,
+        createdBy: "system",
+        createdAt: 0,
+        members: []
+      };
+      g.groups.unshift(gg);
+      return writeDB("groups.json", g).then(function() { return gg; });
+    }
+    return gg;
+  });
 }
 
-function isGlobalMember(username, db){
-  return !!(db?.users?.[username]);
+function isGlobalMember(username, db) {
+  return !!(db && db.users && db.users[username]);
 }
 
-function isGlobalAdmin(username, db){
-  return db?.users?.[username]?.role === 'Developer';
+function isGlobalAdmin(username, db) {
+  return !!(db && db.users && db.users[username] && db.users[username].role === "Developer");
 }
 
-function isMemberOf(group, username, db){
-  if(group.isGlobal) return isGlobalMember(username, db);
-  return (group.members || []).includes(username);
+function isMemberOf(group, username, db) {
+  if (group.isGlobal) return isGlobalMember(username, db);
+  return (group.members || []).indexOf(username) >= 0;
 }
 
-function getGroupAdmins(group, db){
-  if(group.isGlobal){
-    return Object.keys(db?.users || {}).filter(u => db.users[u].role === 'Developer');
+function getGroupAdmins(group, db) {
+  if (group.isGlobal) {
+    var admins = [];
+    var keys = Object.keys((db && db.users) || {});
+    for (var i = 0; i < keys.length; i++) {
+      if (db.users[keys[i]].role === "Developer") admins.push(keys[i]);
+    }
+    return admins;
   }
   return group.admins || [group.createdBy];
 }
+
+// ===== DIAGNOSTIC =====
+function diagnoseCMz() {
+  console.log("============ CMzChat Diagnostic ============");
+  console.log("Config:", CFG);
+  console.log("1) Test read database.json...");
+  return readDB("database.json", null).then(function(db) {
+    if (!db) { console.error("   FAILED"); return; }
+    console.log("   OK - Users: " + Object.keys(db.users || {}).length);
+
+    console.log("2) Test read groups.json...");
+    return readDB("groups.json", null).then(function(g) {
+      console.log("   " + (g ? "OK - Groups: " + (g.groups || []).length : "FAILED"));
+
+      console.log("3) Test write test.json...");
+      return writeDB("test.json", { ping: "pong", t: Date.now() }).then(function(ok) {
+        console.log("   " + (ok ? "OK" : "FAILED"));
+        console.log("============================================");
+      });
+    });
+  });
+}
+window.diagnoseCMz = diagnoseCMz;
