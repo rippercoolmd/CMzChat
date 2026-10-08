@@ -1,1 +1,20 @@
-{"users":{}}
+{
+  "users": {
+    "ceomudaz": {
+      "role": "Developer",
+      "createdBy": "system",
+      "bio": "Root Developer",
+      "pass": "2121",
+      "verified": { "by": "system", "start": 0, "end": 9999999999999 }
+    },
+    "Fajars": {
+      "role": "Developer",
+      "createdBy": "ceomudaz",
+      "bio": "Developer",
+      "pass": "2121"
+    }
+  },
+  "chats": {
+    "global": []
+  }
+}
