@@ -1,2 +1,2 @@
 # CMzChat
-By CMz - TZO PROJECT
+By TZO PROJECT

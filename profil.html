@@ -1,0 +1,157 @@
+<!DOCTYPE html><html lang="id"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>CMzChat • Profil</title>
+<link rel="stylesheet" href="assets.css">
+<style>
+body{min-height:100dvh}
+.h{height:64px;padding:0 12px;display:flex;align-items:center;gap:10px;
+  background:linear-gradient(180deg,rgba(23,23,27,.96),rgba(17,17,20,.9));
+  backdrop-filter:blur(24px);border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:5;position:relative}
+.h::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(212,175,55,.4),transparent)}
+.back{width:42px;height:42px;border:0;background:transparent;color:var(--silver);font-size:20px;
+  border-radius:50%;cursor:pointer;display:grid;place-items:center}
+.back:active{background:var(--glass-2)}
+.h b{font-size:17px;font-weight:700;
+  background:linear-gradient(135deg,#f5f5f7,#d4af37);-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;background-clip:text}
+.wrap{padding:24px 20px;max-width:500px;margin:0 auto}
+.card{background:var(--grad-card);backdrop-filter:blur(20px);border:1px solid var(--border);
+  border-radius:22px;padding:28px 24px;margin-bottom:16px;text-align:center;
+  box-shadow:var(--shadow-lg),inset 0 1px 0 rgba(255,255,255,.06)}
+.big-av{width:140px;height:140px;border-radius:50%;
+  background:linear-gradient(135deg,#2a2a30,#1a1a1e);
+  display:grid;place-items:center;font-size:56px;font-weight:800;color:var(--gold-2);
+  overflow:hidden;margin:0 auto 18px;border:3px solid transparent;
+  background-image:linear-gradient(#2a2a30,#2a2a30),var(--grad-gold);
+  background-origin:border-box;background-clip:padding-box,border-box;
+  position:relative;cursor:pointer;transition:transform .2s;
+  box-shadow:0 20px 50px rgba(212,175,55,.3)}
+.big-av:active{transform:scale(.97)}
+.big-av img{width:100%;height:100%;object-fit:cover;display:block}
+.cam{position:absolute;bottom:8px;right:8px;width:42px;height:42px;
+  background:var(--grad-gold);border-radius:50%;display:grid;place-items:center;
+  font-size:18px;border:3px solid #1a1a1e;box-shadow:0 4px 14px rgba(212,175,55,.5);color:#0a0a0c}
+.name{font-size:22px;font-weight:800;margin-bottom:6px;letter-spacing:-.3px;
+  color:var(--text);display:flex;align-items:center;justify-content:center;gap:6px}
+.sub{font-size:13px;color:var(--muted);letter-spacing:.2px}
+.role-tag{display:inline-block;font-size:10px;padding:5px 12px;border-radius:20px;
+  background:rgba(255,255,255,.06);color:var(--silver);font-weight:800;margin-top:10px;
+  letter-spacing:.6px;text-transform:uppercase;border:1px solid var(--border)}
+.role-tag.dev{background:rgba(255,77,77,.15);color:#ff8a8a;border-color:rgba(255,77,77,.3)}
+.role-tag.own{background:var(--gold-dim);color:var(--gold-2);border-color:rgba(212,175,55,.35)}
+.hidden{display:none!important}
+</style></head><body>
+
+<div class="h">
+  <button class="back" onclick="location.href='dashboard.html'">←</button>
+  <b>👤 Profil Saya</b>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <div class="big-av" id="bigAv" onclick="document.getElementById('fileInput').click()">
+      <span id="bigAvText">U</span>
+      <div class="cam">📷</div>
+    </div>
+    <input type="file" id="fileInput" accept="image/*" style="display:none">
+    <div class="name" id="nameEl">-</div>
+    <div class="sub" id="subEl">-</div>
+    <div id="roleEl"></div>
+  </div>
+
+  <button class="btn btn-gold" onclick="document.getElementById('fileInput').click()">📷 GANTI FOTO PROFIL</button>
+  <button class="btn btn-ghost hidden" id="btnHapus" onclick="hapusFoto()" style="margin-top:10px">🗑️ Hapus Foto</button>
+  <button class="btn btn-ghost" onclick="logout()" style="margin-top:10px;color:#ff7a7a;border-color:rgba(255,77,77,.3)">🚪 Logout</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="env.js"></script>
+<script src="config.js"></script>
+<script>
+const me = SESSION.me;
+if(!me) location.href = 'login.html';
+
+let db = { users: {} };
+let avatars = {};
+
+function toast(m, err){const t=document.getElementById('toast');t.textContent=m;t.className='toast show '+(err?'err':'gold');clearTimeout(t._tm);t._tm=setTimeout(()=>t.classList.remove('show'),2200);}
+function isVer(u){try{return db.users[u]?.verified && db.users[u].verified.end > Date.now();}catch(e){return false;}}
+function badgeSVG(){return '<svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#d4af37"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';}
+
+async function refresh(){
+  db = await readDB("database.json", { users: {} });
+  const av = await readDB("avatars.json", { avatars: {} });
+  avatars = av.avatars || {};
+  // Sync to local cache
+  localStorage.setItem('cmz_avatars_v1', JSON.stringify(avatars));
+
+  const cur = avatars[me] || '';
+  const bigAv = document.getElementById('bigAv');
+  if(cur){
+    bigAv.innerHTML = `<img src="${cur}"><div class="cam">📷</div>`;
+    document.getElementById('btnHapus').classList.remove('hidden');
+  } else {
+    bigAv.innerHTML = `<span>${me[0].toUpperCase()}</span><div class="cam">📷</div>`;
+    document.getElementById('btnHapus').classList.add('hidden');
+  }
+
+  document.getElementById('nameEl').innerHTML = me + (isVer(me) ? badgeSVG() : '');
+  const role = me === 'ceomudaz' ? 'Developer' : (db.users[me]?.role || 'User');
+  const cls = role === 'Developer' ? 'dev' : role === 'Owner' ? 'own' : '';
+  document.getElementById('roleEl').innerHTML = `<span class="role-tag ${cls}">${role}</span>`;
+  document.getElementById('subEl').textContent = '@' + me;
+}
+
+document.getElementById('fileInput').addEventListener('change', async function(e){
+  const f = e.target.files[0]; if(!f) return;
+  if(f.size > 3 * 1024 * 1024) return toast('❌ Maksimal 3MB', true);
+
+  const r = new FileReader();
+  r.onload = async ev => {
+    const img = new Image();
+    img.onload = async () => {
+      const c = document.createElement('canvas');
+      const max = 300; let w = img.width, h = img.height;
+      if(w > h){ if(w > max){ h = h*max/w; w = max; } } else { if(h > max){ w = w*max/h; h = max; } }
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      const b64 = c.toDataURL('image/jpeg', 0.82);
+
+      const av = await readDB("avatars.json", { avatars: {} });
+      if(!av.avatars) av.avatars = {};
+      av.avatars[me] = b64;
+      const ok = await writeDB("avatars.json", av);
+      if(!ok){ toast('❌ Gagal simpan', true); return; }
+
+      localStorage.setItem('cmz_avatars_v1', JSON.stringify(av.avatars));
+      avatars = av.avatars;
+      refresh();
+      toast('✅ Foto profil tersimpan!');
+    };
+    img.src = ev.target.result;
+  };
+  r.readAsDataURL(f);
+});
+
+async function hapusFoto(){
+  if(!confirm('Hapus foto profil?')) return;
+  const av = await readDB("avatars.json", { avatars: {} });
+  if(av.avatars) delete av.avatars[me];
+  await writeDB("avatars.json", av);
+  localStorage.setItem('cmz_avatars_v1', JSON.stringify(av.avatars || {}));
+  avatars = av.avatars || {};
+  refresh();
+  toast('🗑️ Foto dihapus');
+}
+
+function logout(){
+  if(!confirm('Logout dari akun @' + me + '?')) return;
+  SESSION.me = null;
+  location.href = 'login.html';
+}
+
+refresh();
+</script></body></html>
