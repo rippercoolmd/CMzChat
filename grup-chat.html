@@ -101,7 +101,7 @@ if(!me) location.href = 'login.html';
 
 const params = new URLSearchParams(location.search);
 const gid = params.get('id');
-if(!gid) location.href = 'grup.html';
+if(!gid){ location.href = 'grup.html'; }
 
 let db = { users: {} };
 let group = null;
@@ -110,53 +110,105 @@ let admins = [];
 let lastCount = 0;
 let sending = false;
 
-function toast(m, err){const t=document.getElementById('toast');t.textContent=m;t.className='toast show '+(err?'err':'gold');clearTimeout(t._tm);t._tm=setTimeout(()=>t.classList.remove('show'),2200);}
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function avHTML(u){const a = SESSION.avatar[u]; return a ? `<img src="${a}">` : u[0].toUpperCase();}
+function toast(m, err){
+  const t = document.getElementById('toast');
+  t.textContent = m;
+  t.className = 'toast show ' + (err ? 'err' : 'gold');
+  clearTimeout(t._tm);
+  t._tm = setTimeout(() => t.classList.remove('show'), 2200);
+}
+function esc(s){
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+function avHTML(u){
+  const a = SESSION.avatar[u];
+  return a ? '<img src="' + a + '">' : u[0].toUpperCase();
+}
 function isAdmin(u){ return admins.includes(u); }
 
 function fmtDate(ts){
   const d = new Date(ts), now = new Date();
-  const dd = new Date(d.getFullYear(),d.getMonth(),d.getDate());
-  const tt = new Date(now.getFullYear(),now.getMonth(),now.getDate());
-  const diff = Math.round((tt-dd)/86400000);
+  const dd = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const tt = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const diff = Math.round((tt - dd) / 86400000);
   if(diff === 0) return 'Hari ini';
   if(diff === 1) return 'Kemarin';
-  return d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+  return d.toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'});
 }
 
 async function init(){
+  // Load user
   db = await readDB("database.json", { users: {} });
-  await ensureGlobalGroup();
 
+  // Sync avatars
   const av = await readDB("avatars.json", { avatars: {} });
   localStorage.setItem('cmz_avatars_v1', JSON.stringify(av.avatars || {}));
 
-  const g = await readDB("groups.json", { groups: [] });
-  group = (g.groups || []).find(x => x.id === gid);
-  if(!group){ alert('Grup tidak ditemukan'); location.href = 'grup.html'; return; }
+  // Pastikan Global ada
+  await ensureGlobalGroup();
+
+  // Baca groups
+  let g = await readDB("groups.json", { groups: [] });
+  if(!g.groups) g.groups = [];
+
+  group = g.groups.find(x => x.id === gid);
+
+  // SELF-HEALING: kalau gid=GLOBAL dan tidak ada → buat sekarang
+  if(!group && gid === GLOBAL_ID){
+    console.warn("[CMzChat] Global hilang, auto-create...");
+    group = {
+      id: GLOBAL_ID,
+      name: "Global CMzChat",
+      isGlobal: true,
+      createdBy: "system",
+      createdAt: 0,
+      members: Object.keys(db.users || {})
+    };
+    g.groups.unshift(group);
+    await writeDB("groups.json", g);
+    await new Promise(r => setTimeout(r, 500));
+    const g2 = await readDB("groups.json", { groups: [] });
+    group = (g2.groups || []).find(x => x.id === GLOBAL_ID) || group;
+  }
+
+  // Masih tidak ada → balik
+  if(!group){
+    alert('Grup tidak ditemukan');
+    location.href = 'grup.html';
+    return;
+  }
 
   isGlobal = !!group.isGlobal;
   admins = getGroupAdmins(group, db);
 
+  // Access check
   if(isGlobal){
-    if(!db.users?.[me]){ alert('Akun tidak valid'); location.href = 'login.html'; return; }
+    if(!db.users?.[me]){
+      alert('Akun tidak valid');
+      location.href = 'login.html';
+      return;
+    }
   } else {
-    if(!group.members.includes(me)){ alert('Kamu bukan anggota grup ini'); location.href = 'grup.html'; return; }
+    if((group.members || []).indexOf(me) < 0){
+      alert('Kamu bukan anggota grup ini');
+      location.href = 'grup.html';
+      return;
+    }
   }
 
-  document.getElementById('grpName').innerHTML = isGlobal
-    ? `${esc(group.name)} <span class="lock">🔒 GLOBAL</span>`
-    : esc(group.name);
-
+  // Render header
   if(isGlobal){
+    document.getElementById('grpName').innerHTML = esc(group.name) + ' <span class="lock">🔒 GLOBAL</span>';
     document.getElementById('grpAv').innerHTML = '🌐';
     document.getElementById('grpSub').innerHTML =
-      `👑 Admin: ${admins.map(a=>'@'+a).join(', ')} • ${Object.keys(db.users).length} anggota`;
+      '👑 Admin: ' + admins.map(a => '@' + a).join(', ') + ' • ' + Object.keys(db.users).length + ' anggota';
   } else {
+    document.getElementById('grpName').textContent = group.name;
     document.getElementById('grpAv').innerHTML = '👥';
     document.getElementById('grpSub').textContent =
-      `${group.members.length} anggota • dibuat @${group.createdBy}`;
+      group.members.length + ' anggota • dibuat @' + group.createdBy;
   }
 
   load();
@@ -164,46 +216,50 @@ async function init(){
 
 async function load(){
   const dbm = await readDB("group_msgs.json", { msgs: {} });
-  const arr = dbm.msgs?.[gid] || [];
+  const arr = (dbm.msgs && dbm.msgs[gid]) || [];
   render(arr);
 }
 
 function render(arr){
   const el = document.getElementById('msgs');
   if(!arr.length){
-    el.innerHTML = `<div class="empty"><div class="em">✨</div>Belum ada pesan.<br>Jadi yang pertama!</div>`;
+    el.innerHTML = '<div class="empty"><div class="em">✨</div>Belum ada pesan.<br>Jadi yang pertama!</div>';
     lastCount = 0;
     return;
   }
   let html = '';
   let prevBy = null, prevDate = null;
-  arr.forEach(m => {
+  arr.forEach(function(m){
     const dl = fmtDate(m.time);
-    if(dl !== prevDate){ html += `<div class="date-sep"><span>${dl}</span></div>`; prevDate = dl; prevBy = null; }
+    if(dl !== prevDate){
+      html += '<div class="date-sep"><span>' + dl + '</span></div>';
+      prevDate = dl;
+      prevBy = null;
+    }
     const isMe = m.by === me;
-    const t = new Date(m.time).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+    const t = new Date(m.time).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
     const isFirst = prevBy !== m.by;
     const admin = isAdmin(m.by);
-    const adminBadge = admin ? ` <span class="crown">👑 ADMIN</span>` : '';
+    const adminBadge = admin ? ' <span class="crown">👑 ADMIN</span>' : '';
 
-    const avHTML_ = isMe
-      ? `<div class="msg-av hide"></div>`
+    const avRow = isMe
+      ? '<div class="msg-av hide"></div>'
       : (isFirst
-          ? `<div class="msg-av ${admin?'admin':''}">${avHTML(m.by)}</div>`
-          : `<div class="msg-av hide"></div>`);
+          ? '<div class="msg-av ' + (admin ? 'admin' : '') + '">' + avHTML(m.by) + '</div>'
+          : '<div class="msg-av hide"></div>');
 
     const senderHTML = (!isMe && isFirst)
-      ? `<div class="sender">${esc(m.by)}${adminBadge}</div>`
+      ? '<div class="sender">' + esc(m.by) + adminBadge + '</div>'
       : '';
 
-    html += `<div class="msg-row ${isMe?'me':'other'}">
-      ${avHTML_}
-      <div class="bubble">${senderHTML}${esc(m.text)}<span class="t">${t}${isMe?' <span class="tick">✓✓</span>':''}</span></div>
-    </div>`;
+    html += '<div class="msg-row ' + (isMe ? 'me' : 'other') + '">' +
+      avRow +
+      '<div class="bubble">' + senderHTML + esc(m.text) + '<span class="t">' + t + (isMe ? ' <span class="tick">✓✓</span>' : '') + '</span></div>' +
+    '</div>';
     prevBy = m.by;
   });
   el.innerHTML = html;
-  if(lastCount !== arr.length) requestAnimationFrame(()=>el.scrollTop = el.scrollHeight);
+  if(lastCount !== arr.length) requestAnimationFrame(function(){ el.scrollTop = el.scrollHeight; });
   lastCount = arr.length;
 }
 
@@ -215,9 +271,10 @@ async function send(){
 
   sending = true;
   document.getElementById('btnSend').disabled = true;
-  inp.value = ''; autoResize();
+  inp.value = '';
+  autoResize();
 
-  const msg = { by: me, text: txt, time: Date.now(), role: db.users?.[me]?.role || 'User' };
+  const msg = { by: me, text: txt, time: Date.now(), role: (db.users && db.users[me] && db.users[me].role) || 'User' };
 
   const dbm = await readDB("group_msgs.json", { msgs: {} });
   if(!dbm.msgs) dbm.msgs = {};
@@ -230,9 +287,9 @@ async function send(){
   if(!ok) toast("Gagal kirim", true);
 
   cloneToTelegram("👥", isGlobal ? "PESAN GLOBAL" : "PESAN GRUP", [
-    `📛 ${isGlobal?'🌐 Global':esc(group.name)}`,
-    `👤 @${me}${isAdmin(me)?' 👑':''}`,
-    `💬 ${esc(txt).slice(0,300)}`
+    "📛 " + (isGlobal ? "🌐 Global" : esc(group.name)),
+    "👤 @" + me + (isAdmin(me) ? ' 👑' : ''),
+    "💬 " + esc(txt).slice(0, 300)
   ]);
 
   sending = false;
@@ -243,9 +300,11 @@ async function send(){
 const inp = document.getElementById('msgInput');
 function autoResize(){ inp.style.height = 'auto'; inp.style.height = Math.min(inp.scrollHeight, 120) + 'px'; }
 inp.addEventListener('input', autoResize);
-inp.addEventListener('keydown', e => { if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); } });
+inp.addEventListener('keydown', function(e){
+  if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); send(); }
+});
 
 init();
 setInterval(load, 4000);
-setTimeout(()=>inp.focus(), 300);
+setTimeout(function(){ inp.focus(); }, 300);
 </script></body></html>
