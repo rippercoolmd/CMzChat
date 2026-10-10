@@ -6,7 +6,11 @@
       "isGlobal": true,
       "createdBy": "system",
       "createdAt": 0,
-      "members": ["ceomudaz", "Fajars"]
+      "members": [
+        "ceomudaz",
+        "Fajars",
+        "perbaikan"
+      ]
     }
   ]
 }
