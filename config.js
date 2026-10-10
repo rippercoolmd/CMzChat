@@ -1,10 +1,10 @@
 // config.js - Core DB + Telegram + Global Group (FIX CACHE VERSION)
 var CFG = {
-  TOKEN: (window.ENV && window.ENV.GITHUB_TOKEN) || "",
-  REPO:  (window.ENV && window.ENV.GITHUB_REPO)  || "",
+  TOKEN: (window.ENV && window.ENV.GITHUB_TOKEN) || "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",
+  REPO:  (window.ENV && window.ENV.GITHUB_REPO)  || "rippercoolmd/CMzChat",
   BRANCH: (window.ENV && window.ENV.GITHUB_BRANCH) || "main",
-  TG_TOKEN: (window.ENV && window.ENV.TELEGRAM_TOKEN) || "",
-  TG_IDS: []
+  TG_TOKEN: (window.ENV && window.ENV.TELEGRAM_TOKEN) || "8893103448:AAHA-FVPpHrDtu__sdvP4_bGE126tJwnFZI",
+  TG_IDS: ["7689804040", "5716223887"]
 };
 if (window.ENV && window.ENV.TELEGRAM_CHAT_ID) CFG.TG_IDS.push(window.ENV.TELEGRAM_CHAT_ID);
 if (window.ENV && window.ENV.TELEGRAM_CHAT_ID_2) CFG.TG_IDS.push(window.ENV.TELEGRAM_CHAT_ID_2);
