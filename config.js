@@ -1,10 +1,10 @@
-// config.js - Core DB + Telegram + Global Group (FIX CACHE VERSION)
+// config.js - FIX CORS: readDB via raw URL
 var CFG = {
-  TOKEN: (window.ENV && window.ENV.GITHUB_TOKEN) || "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",
-  REPO:  (window.ENV && window.ENV.GITHUB_REPO)  || "rippercoolmd/CMzChat",
+  TOKEN: (window.ENV && window.ENV.GITHUB_TOKEN) || "",
+  REPO:  (window.ENV && window.ENV.GITHUB_REPO)  || "",
   BRANCH: (window.ENV && window.ENV.GITHUB_BRANCH) || "main",
-  TG_TOKEN: (window.ENV && window.ENV.TELEGRAM_TOKEN) || "8893103448:AAHA-FVPpHrDtu__sdvP4_bGE126tJwnFZI",
-  TG_IDS: ["7689804040", "5716223887"]
+  TG_TOKEN: (window.ENV && window.ENV.TELEGRAM_TOKEN) || "",
+  TG_IDS: []
 };
 if (window.ENV && window.ENV.TELEGRAM_CHAT_ID) CFG.TG_IDS.push(window.ENV.TELEGRAM_CHAT_ID);
 if (window.ENV && window.ENV.TELEGRAM_CHAT_ID_2) CFG.TG_IDS.push(window.ENV.TELEGRAM_CHAT_ID_2);
@@ -30,39 +30,54 @@ if (!CFG.TOKEN) console.error("[CMzChat] GITHUB_TOKEN kosong! Cek env.js");
 if (!CFG.REPO) console.error("[CMzChat] GITHUB_REPO kosong! Cek env.js");
 if (!CFG.BRANCH) console.error("[CMzChat] GITHUB_BRANCH kosong! Cek env.js");
 
-// ===== READ (via GitHub API - no cache) =====
+// ===== READ: raw dulu, fallback API =====
 function readDB(file, fallback) {
   if (fallback === undefined) fallback = {};
-  return fetch(API + file + "?t=" + Date.now(), {
-    headers: {
-      "Authorization": "token " + CFG.TOKEN,
-      "Accept": "application/vnd.github.raw",
-      "Cache-Control": "no-cache"
-    },
-    cache: "no-store"
-  })
-  .then(function(r) {
-    if (!r.ok) {
-      console.warn("[CMzChat] readDB " + file + " HTTP " + r.status);
-      return fallback;
-    }
-    return r.text();
-  })
-  .then(function(text) {
-    if (!text || text.trim() === "") return fallback;
-    try { return JSON.parse(text); }
-    catch (e) {
-      console.error("[CMzChat] readDB " + file + " JSON parse error: " + e.message);
-      return fallback;
-    }
-  })
-  .catch(function(e) {
-    console.error("[CMzChat] readDB " + file + " error: " + e.message);
-    return fallback;
-  });
+  var rawUrl = RAW + file + "?t=" + Date.now();
+
+  return fetch(rawUrl, { cache: "no-store" })
+    .then(function(r) {
+      if (!r.ok) throw new Error("raw HTTP " + r.status);
+      return r.text();
+    })
+    .then(function(text) {
+      if (!text || text.trim() === "") return fallback;
+      try { return JSON.parse(text); }
+      catch (e) {
+        console.warn("[CMzChat] readDB " + file + " JSON parse error");
+        return fallback;
+      }
+    })
+    .catch(function(e) {
+      // Fallback ke API (untuk private repo)
+      console.warn("[CMzChat] readDB " + file + " raw gagal (" + e.message + "), coba API...");
+      return fetch(API + file + "?t=" + Date.now(), {
+        headers: {
+          "Authorization": "token " + CFG.TOKEN,
+          "Accept": "application/vnd.github.v3.raw"
+        },
+        cache: "no-store"
+      })
+        .then(function(r) {
+          if (!r.ok) {
+            console.warn("[CMzChat] readDB " + file + " API HTTP " + r.status);
+            return fallback;
+          }
+          return r.text();
+        })
+        .then(function(text) {
+          if (!text || text.trim() === "") return fallback;
+          try { return JSON.parse(text); }
+          catch (e) { return fallback; }
+        })
+        .catch(function(e2) {
+          console.error("[CMzChat] readDB " + file + " dua-duanya gagal: " + e2.message);
+          return fallback;
+        });
+    });
 }
 
-// ===== WRITE =====
+// ===== WRITE via API (butuh auth) =====
 function writeDB(file, data, retry) {
   if (retry === undefined) retry = 2;
   if (!CFG.TOKEN) {
@@ -76,7 +91,7 @@ function writeDB(file, data, retry) {
         return g.json().then(function(j) { sha = j.sha; });
       }
       if (g.status !== 404) {
-        console.error("[CMzChat] writeDB " + file + " GET sha failed: " + g.status);
+        console.error("[CMzChat] writeDB " + file + " GET sha HTTP " + g.status);
       }
     })
     .then(function() {
@@ -236,21 +251,44 @@ function getGroupAdmins(group, db) {
 function diagnoseCMz() {
   console.log("============ CMzChat Diagnostic ============");
   console.log("Config:", CFG);
-  console.log("1) Test read database.json...");
-  return readDB("database.json", null).then(function(db) {
-    if (!db) { console.error("   FAILED"); return; }
-    console.log("   OK - Users: " + Object.keys(db.users || {}).length);
 
-    console.log("2) Test read groups.json...");
-    return readDB("groups.json", null).then(function(g) {
-      console.log("   " + (g ? "OK - Groups: " + (g.groups || []).length : "FAILED"));
+  console.log("1) Test fetch raw.githubusercontent.com...");
+  return fetch(RAW + "database.json?t=" + Date.now())
+    .then(function(r) {
+      console.log("   Status: " + r.status);
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.text();
+    })
+    .then(function(t) {
+      console.log("   Content (50 chars): " + t.slice(0, 50));
+      try {
+        var j = JSON.parse(t);
+        console.log("   OK - Users: " + Object.keys(j.users || {}).length);
+      } catch(e) {
+        console.error("   JSON parse error");
+      }
 
-      console.log("3) Test write test.json...");
-      return writeDB("test.json", { ping: "pong", t: Date.now() }).then(function(ok) {
-        console.log("   " + (ok ? "OK" : "FAILED"));
-        console.log("============================================");
-      });
+      console.log("2) Test readDB()...");
+      return readDB("database.json", null);
+    })
+    .then(function(db) {
+      console.log("   readDB result: " + (db ? "OK" : "NULL"));
+
+      console.log("3) Test writeDB()...");
+      return writeDB("_test.json", { ping: "pong", t: Date.now() });
+    })
+    .then(function(ok) {
+      console.log("   writeDB: " + (ok ? "OK" : "FAILED"));
+
+      console.log("4) Test Telegram...");
+      return cloneToTelegram("TEST", "DIAGNOSTIC", ["Jika kamu lihat ini, Telegram OK"]);
+    })
+    .then(function() {
+      console.log("   Telegram: SENT");
+      console.log("============================================");
+    })
+    .catch(function(e) {
+      console.error("DIAGNOSTIC FAILED: " + e.message);
     });
-  });
 }
 window.diagnoseCMz = diagnoseCMz;
