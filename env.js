@@ -1,6 +1,6 @@
 // env.js
 window.ENV = {
-  GITHUB_TOKEN: "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",
+  GITHUB_TOKEN: "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",
   GITHUB_REPO: "rippercoolmd/CMzChat",
   GITHUB_BRANCH: "main",
   TELEGRAM_TOKEN: "8893103448:AAHA-FVPpHrDtu__sdvP4_bGE126tJwnFZI",
