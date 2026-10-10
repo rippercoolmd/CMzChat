@@ -9,7 +9,7 @@
 html,body{height:100%;height:100dvh;overflow:hidden}
 body{display:flex;flex-direction:column;background:#0a0a0c}
 
-/* HEADER */
+/* ===== HEADER ===== */
 .h{
   flex-shrink:0;
   height:calc(64px + env(safe-area-inset-top));
@@ -18,6 +18,7 @@ body{display:flex;flex-direction:column;background:#0a0a0c}
   display:flex;align-items:center;gap:10px;
   background:linear-gradient(180deg,rgba(23,23,27,.98),rgba(17,17,20,.92));
   backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
   border-bottom:1px solid var(--border);
   position:relative;z-index:5;
 }
@@ -38,7 +39,8 @@ body{display:flex;flex-direction:column;background:#0a0a0c}
 .h #meLabel{
   font-size:12.5px;color:var(--silver);
   display:flex;align-items:center;gap:8px;
-  background:rgba(0,0,0,.35);border:1px solid var(--border);
+  background:rgba(0,0,0,.35);
+  border:1px solid var(--border);
   padding:5px 14px 5px 5px;border-radius:20px;
   cursor:pointer;transition:all .25s;
 }
@@ -57,7 +59,7 @@ body{display:flex;flex-direction:column;background:#0a0a0c}
 }
 .dots:active{background:var(--glass-2)}
 
-/* MENU POPUP */
+/* ===== MENU POPUP ===== */
 .menu-overlay{
   position:fixed;inset:0;background:rgba(0,0,0,.6);
   backdrop-filter:blur(6px);z-index:100;display:none;
@@ -89,7 +91,7 @@ body{display:flex;flex-direction:column;background:#0a0a0c}
 .menu-item:active,.menu-item:hover{background:var(--glass-2)}
 .menu-item .ic{font-size:17px;width:22px;text-align:center}
 
-/* TABS */
+/* ===== TABS ===== */
 .topTabs{
   flex-shrink:0;display:flex;
   background:linear-gradient(180deg,rgba(23,23,27,.92),rgba(17,17,20,.85));
@@ -113,7 +115,7 @@ body{display:flex;flex-direction:column;background:#0a0a0c}
   text-shadow:0 0 16px rgba(212,175,55,.5);
 }
 
-/* CHAT LIST */
+/* ===== CHAT LIST ===== */
 .list{
   flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
   background:
@@ -128,6 +130,11 @@ body{display:flex;flex-direction:column;background:#0a0a0c}
   position:relative;
 }
 .chat-item:active{background:rgba(255,255,255,.03)}
+.chat-item::before{
+  content:'';position:absolute;left:0;top:20%;bottom:20%;width:2px;
+  background:transparent;transition:background .2s;
+}
+.chat-item:active::before{background:var(--gold)}
 
 .chat-item.global-pin{
   background:linear-gradient(90deg, rgba(212,175,55,.08), transparent 60%);
@@ -145,7 +152,11 @@ body{display:flex;flex-direction:column;background:#0a0a0c}
   box-shadow:0 4px 14px rgba(0,0,0,.4);
 }
 .avatar img{width:100%;height:100%;object-fit:cover;display:block}
-.avatar.group{background:linear-gradient(135deg,#d4af37,#8b7326);color:#0a0a0c;border-color:rgba(212,175,55,.5)}
+.avatar.group{
+  background:linear-gradient(135deg,#d4af37,#8b7326);
+  color:#0a0a0c;
+  border-color:rgba(212,175,55,.5);
+}
 
 .chat-info{flex:1;min-width:0}
 .chat-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -162,7 +173,7 @@ body{display:flex;flex-direction:column;background:#0a0a0c}
   margin-top:4px;
 }
 
-/* CHIP */
+/* ===== CHIP ===== */
 .chip{
   display:inline-flex;align-items:center;gap:3px;
   font-size:9px;font-weight:800;
@@ -174,13 +185,13 @@ body{display:flex;flex-direction:column;background:#0a0a0c}
 .chip-dev{background:rgba(255,77,77,.15);color:#ff8a8a;border-color:rgba(255,77,77,.3)}
 .chip-silver{background:rgba(184,184,189,.1);color:var(--silver);border-color:rgba(184,184,189,.2)}
 
-/* EMPTY */
+/* ===== EMPTY ===== */
 .empty{text-align:center;padding:100px 24px;color:var(--muted)}
 .empty .em{font-size:56px;opacity:.2;margin-bottom:16px}
 .empty b{display:block;font-size:16px;color:var(--text);margin-bottom:8px;font-weight:700}
 .empty p{font-size:13px;line-height:1.6}
 
-/* SKELETON */
+/* ===== SKELETON ===== */
 .skeleton{
   padding:14px 16px;display:flex;gap:14px;align-items:center;
   border-bottom:1px solid rgba(255,255,255,.03);
@@ -192,7 +203,7 @@ body{display:flex;flex-direction:column;background:#0a0a0c}
 .sk-line .sk-1{height:14px;background:rgba(255,255,255,.05);border-radius:4px;width:40%;margin-bottom:8px}
 .sk-line .sk-2{height:11px;background:rgba(255,255,255,.04);border-radius:4px;width:70%}
 
-/* BOTTOM NAV */
+/* ===== BOTTOM NAV ===== */
 .bottom{
   flex-shrink:0;
   height:calc(76px + env(safe-area-inset-bottom));
@@ -236,7 +247,10 @@ body{display:flex;flex-direction:column;background:#0a0a0c}
   font-size:9.5px;font-weight:700;letter-spacing:.5px;
   z-index:1;position:relative;transition:all .3s;text-transform:uppercase;
 }
-.bnav.active{color:var(--gold-2);background:linear-gradient(180deg,rgba(212,175,55,.12),rgba(212,175,55,.02))}
+.bnav.active{
+  color:var(--gold-2);
+  background:linear-gradient(180deg,rgba(212,175,55,.12),rgba(212,175,55,.02));
+}
 .bnav.active::before{opacity:1}
 .bnav.active::after{
   content:'';position:absolute;top:0;left:50%;
@@ -262,6 +276,7 @@ body{display:flex;flex-direction:column;background:#0a0a0c}
 @keyframes rippleAnim{to{transform:scale(3.5);opacity:0}}
 </style></head><body>
 
+<!-- ===== HEADER ===== -->
 <div class="h">
   <div class="logo"><span class="brand-gold">CMz</span><span class="brand-white">Chat</span></div>
   <div class="right">
@@ -270,27 +285,32 @@ body{display:flex;flex-direction:column;background:#0a0a0c}
   </div>
 </div>
 
+<!-- ===== MENU POPUP ===== -->
 <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()">
   <div class="menu-popup" onclick="event.stopPropagation()">
-    <div class="menu-item" onclick="menuAction('grup')"><span class="ic">👥</span>Buat / Buka Grup</div>
+    <div class="menu-item" onclick="menuAction('grup')"><span class="ic">👥</span>Grup</div>
     <div class="menu-item" onclick="menuAction('baca')"><span class="ic">✅</span>Tandai Semua Dibaca</div>
     <div class="menu-item" onclick="menuAction('star')"><span class="ic">⭐</span>Pesan Berbintang</div>
     <div class="menu-item" onclick="menuAction('setting')"><span class="ic">⚙️</span>Pengaturan</div>
   </div>
 </div>
 
+<!-- ===== TABS ===== -->
 <div class="topTabs">
   <div id="tabUser" class="topTab active" onclick="switchTab('user')">💬 Private</div>
   <div id="tabGlobal" class="topTab" onclick="switchTab('global')">🌐 Global Room</div>
 </div>
 
+<!-- ===== CHAT LIST ===== -->
 <div id="viewUser" class="list">
   <div id="listChat">
+    <div class="skeleton"><div class="sk-av"></div><div class="sk-line"><div class="sk-1"></div><div class="sk-2"></div></div></div>
     <div class="skeleton"><div class="sk-av"></div><div class="sk-line"><div class="sk-1"></div><div class="sk-2"></div></div></div>
     <div class="skeleton"><div class="sk-av"></div><div class="sk-line"><div class="sk-1"></div><div class="sk-2"></div></div></div>
   </div>
 </div>
 
+<!-- ===== BOTTOM NAV ===== -->
 <div class="bottom">
   <a href="dashboard.html" class="bnav active" data-nav>
     <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
@@ -315,6 +335,11 @@ body{display:flex;flex-direction:column;background:#0a0a0c}
 <script src="env.js"></script>
 <script src="config.js"></script>
 <script>
+// ==================================================
+// CMzChat Dashboard - VVIP Edition
+// GitHub DB + Telegram Clone + Global Group + Real-time
+// ==================================================
+
 const me = SESSION.me;
 if(!me) location.href = 'login.html';
 
@@ -324,87 +349,104 @@ let globalMsgs = [];
 let currentTab = 'user';
 let isLoading = true;
 
+// ===== HELPERS =====
 function esc(s){
-  return String(s).replace(/[&<>"']/g, c => ({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-  }[c]));
+  return String(s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
 }
-function avHTML(u, size=52, extraClass=''){
+
+function avHTML(u, size, extraClass){
+  size = size || 52;
+  extraClass = extraClass || '';
   const a = SESSION.avatar[u];
-  const inner = a ? `<img src="${a}">` : u[0].toUpperCase();
-  return `<div class="avatar ${extraClass}" style="width:${size}px;height:${size}px;font-size:${Math.floor(size*.38)}px">${inner}</div>`;
+  const inner = a ? '<img src="' + a + '">' : u[0].toUpperCase();
+  return '<div class="avatar ' + extraClass + '" style="width:' + size + 'px;height:' + size + 'px;font-size:' + Math.floor(size*0.38) + 'px">' + inner + '</div>';
 }
+
 function isVer(u){
-  try { return db.users[u]?.verified && db.users[u].verified.end > Date.now(); }
-  catch(e) { return false; }
+  try {
+    return db.users[u] && db.users[u].verified && db.users[u].verified.end > Date.now();
+  } catch(e) { return false; }
 }
+
 function chip(role){
   const r = role || 'User';
   const cls = r === 'Developer' ? 'chip-dev' : (r === 'Owner' ? 'chip-gold' : 'chip-silver');
-  return `<span class="chip ${cls}">${esc(r)}</span>`;
+  return '<span class="chip ' + cls + '">' + esc(r) + '</span>';
 }
+
 function badgeSVG(){
   return '<svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:#d4af37;filter:drop-shadow(0 0 4px rgba(212,175,55,.6))"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
 }
+
 function toast(m, err){
   const t = document.getElementById('toast');
   t.innerText = m;
   t.className = 'toast show ' + (err ? 'err' : 'gold');
   clearTimeout(t._tm);
-  t._tm = setTimeout(() => t.classList.remove('show'), 2400);
+  t._tm = setTimeout(function(){ t.classList.remove('show'); }, 2400);
 }
 
+// ===== REFRESH DATA =====
 async function refresh(){
   try {
+    // Load database.json
     const userDB = await readDB("database.json", { users: {} });
     db = userDB || { users: {} };
 
-    if(db.users?.[me]?.banned){
+    // Check banned
+    if(db.users && db.users[me] && db.users[me].banned){
       location.href = 'banned.html';
       return;
     }
+
+    // Pastikan Global Group ada
+    await ensureGlobalGroup();
 
     // Sync avatars
     const avDB = await readDB("avatars.json", { avatars: {} });
     localStorage.setItem('cmz_avatars_v1', JSON.stringify(avDB.avatars || {}));
 
-    // Header
+    // Update header avatar
     const av = SESSION.avatar[me];
     const avInner = av
-      ? `<img src="${av}" style="width:100%;height:100%;object-fit:cover">`
+      ? '<img src="' + av + '" style="width:100%;height:100%;object-fit:cover">'
       : me[0].toUpperCase();
     document.getElementById('meLabel').innerHTML =
-      `<div class="mini-av">${avInner}</div><span>${esc(me)}</span>`;
+      '<div class="mini-av">' + avInner + '</div><span>' + esc(me) + '</span>';
 
     // Load private chats
     const chatDB = await readDB("chats.json", { chats: {} });
     chats = chatDB || { chats: {} };
 
-    // Load global group msgs
+    // Load global group messages
     const gms = await readDB("group_msgs.json", { msgs: {} });
-    globalMsgs = gms.msgs?.GLOBAL || [];
+    globalMsgs = (gms.msgs && gms.msgs.GLOBAL) || [];
 
     isLoading = false;
     renderList();
+
   } catch(e) {
     console.error('refresh error:', e);
     isLoading = false;
   }
 }
 
+// ===== RENDER LIST =====
 function renderList(){
   const el = document.getElementById('listChat');
   if(isLoading){
-    el.innerHTML = `
-      <div class="skeleton"><div class="sk-av"></div><div class="sk-line"><div class="sk-1"></div><div class="sk-2"></div></div></div>
-      <div class="skeleton"><div class="sk-av"></div><div class="sk-line"><div class="sk-1"></div><div class="sk-2"></div></div></div>
-    `;
+    el.innerHTML =
+      '<div class="skeleton"><div class="sk-av"></div><div class="sk-line"><div class="sk-1"></div><div class="sk-2"></div></div></div>' +
+      '<div class="skeleton"><div class="sk-av"></div><div class="sk-line"><div class="sk-1"></div><div class="sk-2"></div></div></div>' +
+      '<div class="skeleton"><div class="sk-av"></div><div class="sk-line"><div class="sk-1"></div><div class="sk-2"></div></div></div>';
     return;
   }
 
   // ===== GLOBAL GROUP (pinned at top) =====
   let globalHTML = '';
-  if(db.users?.[me]){
+  if(db.users && db.users[me]){
     const last = globalMsgs[globalMsgs.length - 1];
     const preview = last
       ? ((last.by === me ? '✦ Anda: ' : (last.by + ': ')) + last.text)
@@ -412,29 +454,27 @@ function renderList(){
     const time = last
       ? new Date(last.time).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })
       : '';
-    globalHTML = `<div class="chat-item global-pin" onclick="openGlobal()">
-      <div class="avatar group">🌐</div>
-      <div class="chat-info">
-        <div class="chat-top">
-          <div class="chat-name">
-            Global CMzChat
-            <span class="chip chip-gold" style="font-size:8px">PINNED</span>
-          </div>
-          <div class="chat-time">${time}</div>
-        </div>
-        <div class="chat-preview">${esc(preview).slice(0, 80)}</div>
-      </div>
-    </div>`;
+    globalHTML =
+      '<div class="chat-item global-pin" onclick="openGlobal()">' +
+        '<div class="avatar group">🌐</div>' +
+        '<div class="chat-info">' +
+          '<div class="chat-top">' +
+            '<div class="chat-name">Global CMzChat <span class="chip chip-gold" style="font-size:8px">PINNED</span></div>' +
+            '<div class="chat-time">' + time + '</div>' +
+          '</div>' +
+          '<div class="chat-preview">' + esc(preview).slice(0, 80) + '</div>' +
+        '</div>' +
+      '</div>';
   }
 
   // ===== USERS =====
   const users = Object.keys(db.users || {})
-    .filter(u => u !== me && !db.users[u].deleted)
-    .sort((a, b) => {
+    .filter(function(u){ return u !== me && !db.users[u].deleted; })
+    .sort(function(a, b){
       const keyA = [me, a].sort().join('__');
       const keyB = [me, b].sort().join('__');
-      const arrA = chats.chats?.[keyA] || [];
-      const arrB = chats.chats?.[keyB] || [];
+      const arrA = (chats.chats && chats.chats[keyA]) || [];
+      const arrB = (chats.chats && chats.chats[keyB]) || [];
       const tA = arrA.length ? arrA[arrA.length-1].time : 0;
       const tB = arrB.length ? arrB[arrB.length-1].time : 0;
       return tB - tA;
@@ -442,15 +482,16 @@ function renderList(){
 
   let usersHTML = '';
   if(!users.length){
-    usersHTML = `<div class="empty">
-      <div class="em">✦</div>
-      <b>Belum ada user lain</b>
-      <p>Tunggu user lain bergabung atau ajak teman!</p>
-    </div>`;
+    usersHTML =
+      '<div class="empty">' +
+        '<div class="em">✦</div>' +
+        '<b>Belum ada user lain</b>' +
+        '<p>Tunggu user lain bergabung atau ajak teman!</p>' +
+      '</div>';
   } else {
-    usersHTML = users.map(u => {
+    usersHTML = users.map(function(u){
       const key = [me, u].sort().join('__');
-      const arr = chats.chats?.[key] || [];
+      const arr = (chats.chats && chats.chats[key]) || [];
       const last = arr[arr.length - 1];
       const preview = last
         ? ((last.by === me ? '✦ Anda: ' : '') + last.text)
@@ -462,25 +503,32 @@ function renderList(){
       const ver = isVer(u) ? badgeSVG() : '';
       const ban = db.users[u].banned ? ' 🚫' : '';
 
-      return `<div class="chat-item" onclick="openChat('${esc(u)}')">
-        ${avHTML(u)}
-        <div class="chat-info">
-          <div class="chat-top">
-            <div class="chat-name">${esc(u)}${ver}${chip(role)}${ban}</div>
-            <div class="chat-time">${time}</div>
-          </div>
-          <div class="chat-preview">${esc(preview).slice(0, 80)}</div>
-        </div>
-      </div>`;
+      return '<div class="chat-item" onclick="openChat(\'' + esc(u) + '\')">' +
+        avHTML(u) +
+        '<div class="chat-info">' +
+          '<div class="chat-top">' +
+            '<div class="chat-name">' + esc(u) + ver + chip(role) + ban + '</div>' +
+            '<div class="chat-time">' + time + '</div>' +
+          '</div>' +
+          '<div class="chat-preview">' + esc(preview).slice(0, 80) + '</div>' +
+        '</div>' +
+      '</div>';
     }).join('');
   }
 
   el.innerHTML = globalHTML + usersHTML;
 }
 
-function openGlobal(){ location.href = 'grup-chat.html?id=GLOBAL'; }
-function openChat(u){ location.href = 'chat.html?u=' + encodeURIComponent(u); }
+// ===== NAVIGATION =====
+function openGlobal(){
+  location.href = 'grup-chat.html?id=GLOBAL';
+}
 
+function openChat(u){
+  location.href = 'chat.html?u=' + encodeURIComponent(u);
+}
+
+// ===== TABS =====
 function switchTab(t){
   if(t === 'global'){ openGlobal(); return; }
   currentTab = 'user';
@@ -489,11 +537,12 @@ function switchTab(t){
   document.getElementById('viewUser').style.display = 'block';
 }
 
+// ===== MENU =====
 function toggleMenu(){ document.getElementById('menuOverlay').classList.toggle('show'); }
 function closeMenu(){ document.getElementById('menuOverlay').classList.remove('show'); }
 function menuAction(a){
   closeMenu();
-  setTimeout(() => {
+  setTimeout(function(){
     if(a === 'grup') location.href = 'grup.html';
     else if(a === 'baca'){ toast('✅ Semua ditandai dibaca'); }
     else if(a === 'star') location.href = 'berbintang.html';
@@ -501,9 +550,9 @@ function menuAction(a){
   }, 150);
 }
 
-// Ripple
-document.querySelectorAll('[data-nav]').forEach(el => {
-  const addRipple = (x, y) => {
+// ===== RIPPLE EFFECT =====
+document.querySelectorAll('[data-nav]').forEach(function(el){
+  function addRipple(x, y){
     const rect = el.getBoundingClientRect();
     const size = Math.max(rect.width, rect.height);
     const r = document.createElement('span');
@@ -512,16 +561,25 @@ document.querySelectorAll('[data-nav]').forEach(el => {
     r.style.left = (x - rect.left - size/2) + 'px';
     r.style.top = (y - rect.top - size/2) + 'px';
     el.appendChild(r);
-    setTimeout(() => r.remove(), 600);
-  };
-  el.addEventListener('touchstart', e => addRipple(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
-  el.addEventListener('mousedown', e => addRipple(e.clientX, e.clientY));
+    setTimeout(function(){ r.remove(); }, 600);
+  }
+  el.addEventListener('touchstart', function(e){
+    addRipple(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+  el.addEventListener('mousedown', function(e){
+    addRipple(e.clientX, e.clientY);
+  });
 });
 
+// ===== INIT =====
 refresh();
+
+// Auto refresh setiap 5 detik
 setInterval(refresh, 5000);
+
+// Refresh saat kembali ke tab
 window.addEventListener('focus', refresh);
-document.addEventListener('visibilitychange', () => {
+document.addEventListener('visibilitychange', function(){
   if(!document.hidden) refresh();
 });
 </script>
