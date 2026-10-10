@@ -1,0 +1,204 @@
+<!DOCTYPE html><html lang="id"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CMzChat • Diagnostic</title>
+<style>
+body{margin:0;padding:20px;background:#0a0a0c;color:#e9edef;font-family:monospace;font-size:12.5px;line-height:1.6}
+h1{font-size:16px;color:#d4af37;margin-bottom:16px}
+.step{background:#1a1a1e;border-left:3px solid #d4af37;padding:12px;border-radius:8px;margin-bottom:10px}
+.ok{color:#4ade80}
+.err{color:#ff4d4d}
+.warn{color:#fbbf24}
+pre{background:#000;padding:10px;border-radius:6px;overflow-x:auto;font-size:11px;max-height:200px;white-space:pre-wrap;word-break:break-all}
+button{background:#d4af37;color:#000;border:0;padding:12px 20px;border-radius:8px;font-weight:800;font-size:14px;cursor:pointer;width:100%;margin-top:10px}
+</style></head><body>
+<h1>🔍 CMzChat Diagnostic</h1>
+<div id="out"></div>
+<button onclick="run()">▶ JALANKAN TEST</button>
+
+<script src="env.js"></script>
+<script>
+const out = document.getElementById('out');
+function log(type, msg, data){
+  const cls = type === 'ok' ? 'ok' : type === 'err' ? 'err' : 'warn';
+  let html = '<div class="step"><span class="' + cls + '">' + msg + '</span>';
+  if(data) html += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+  html += '</div>';
+  out.innerHTML += html;
+}
+
+async function run(){
+  out.innerHTML = '';
+
+  // STEP 1: Cek env.js
+  log('warn', '📦 STEP 1: Cek env.js...');
+  if(!window.ENV){
+    log('err', '❌ window.ENV tidak ada! env.js tidak ter-load');
+    return;
+  }
+  log('ok', '✅ env.js loaded');
+  log('warn', 'Config values:', {
+    GITHUB_TOKEN: window.ENV.GITHUB_TOKEN ? (window.ENV.GITHUB_TOKEN.slice(0,10) + '...') : 'KOSONG',
+    GITHUB_REPO: window.ENV.GITHUB_REPO || 'KOSONG',
+    GITHUB_BRANCH: window.ENV.GITHUB_BRANCH || 'KOSONG',
+    TELEGRAM_TOKEN: window.ENV.TELEGRAM_TOKEN ? 'ADA' : 'KOSONG'
+  });
+
+  if(!window.ENV.GITHUB_TOKEN){ log('err', '❌ GITHUB_TOKEN kosong!'); return; }
+  if(!window.ENV.GITHUB_REPO){ log('err', '❌ GITHUB_REPO kosong!'); return; }
+  if(!window.ENV.GITHUB_BRANCH){ log('err', '❌ GITHUB_BRANCH kosong!'); return; }
+
+  const REPO = window.ENV.GITHUB_REPO;
+  const BRANCH = window.ENV.GITHUB_BRANCH;
+  const TOKEN = window.ENV.GITHUB_TOKEN;
+
+  // STEP 2: Test token valid
+  log('warn', '🔑 STEP 2: Test token GitHub...');
+  try{
+    const r = await fetch('https://api.github.com/user', {
+      headers: { 'Authorization': 'token ' + TOKEN }
+    });
+    if(!r.ok){
+      log('err', '❌ Token INVALID / expired! HTTP ' + r.status);
+      const j = await r.json();
+      log('err', 'Detail:', j);
+      return;
+    }
+    const user = await r.json();
+    log('ok', '✅ Token valid, login sebagai: ' + user.login);
+  } catch(e){
+    log('err', '❌ Gagal cek token: ' + e.message);
+    return;
+  }
+
+  // STEP 3: Test akses repo
+  log('warn', '📁 STEP 3: Test akses repo ' + REPO + '...');
+  try{
+    const r = await fetch('https://api.github.com/repos/' + REPO, {
+      headers: { 'Authorization': 'token ' + TOKEN }
+    });
+    if(!r.ok){
+      log('err', '❌ Tidak bisa akses repo! HTTP ' + r.status);
+      log('err', 'Kemungkinan: repo tidak ada, atau token tidak punya akses');
+      return;
+    }
+    const repo = await r.json();
+    log('ok', '✅ Repo OK: ' + repo.full_name + ' (visibility: ' + repo.visibility + ')');
+    log('warn', 'Default branch: ' + repo.default_branch);
+    if(repo.default_branch !== BRANCH){
+      log('warn', '⚠️ env.js pakai branch "' + BRANCH + '" tapi repo pakai "' + repo.default_branch + '"');
+    }
+  } catch(e){
+    log('err', '❌ Error: ' + e.message);
+    return;
+  }
+
+  // STEP 4: Test read database.json
+  log('warn', '📖 STEP 4: Baca database.json...');
+  try{
+    const url = 'https://api.github.com/repos/' + REPO + '/contents/database.json?ref=' + BRANCH;
+    const r = await fetch(url, {
+      headers: {
+        'Authorization': 'token ' + TOKEN,
+        'Accept': 'application/vnd.github.raw'
+      }
+    });
+    if(!r.ok){
+      log('err', '❌ Gagal baca! HTTP ' + r.status);
+      if(r.status === 404){
+        log('err', '➡️ FILE database.json TIDAK ADA di repo!');
+        log('err', '➡️ Buat file database.json dengan isi: {"users":{}}');
+      }
+      return;
+    }
+    const text = await r.text();
+    log('warn', 'Raw content (50 chars):', text.slice(0, 50));
+    try{
+      const data = JSON.parse(text);
+      log('ok', '✅ database.json valid, users: ' + Object.keys(data.users || {}).length);
+    } catch(e){
+      log('err', '❌ JSON RUSAK! ' + e.message);
+      return;
+    }
+  } catch(e){
+    log('err', '❌ Error: ' + e.message);
+    return;
+  }
+
+  // STEP 5: Test read semua file
+  const files = ['chats.json','groups.json','group_msgs.json','avatars.json','blocked.json','review.json','starred.json','status.json','iklan.json'];
+  log('warn', '📖 STEP 5: Cek semua file JSON...');
+  for(const f of files){
+    try{
+      const r = await fetch('https://api.github.com/repos/' + REPO + '/contents/' + f + '?ref=' + BRANCH, {
+        headers: { 'Authorization': 'token ' + TOKEN, 'Accept': 'application/vnd.github.raw' }
+      });
+      if(r.ok){
+        log('ok', '  ✅ ' + f);
+      } else {
+        log('err', '  ❌ ' + f + ' → HTTP ' + r.status);
+      }
+    } catch(e){
+      log('err', '  ❌ ' + f + ' → ' + e.message);
+    }
+  }
+
+  // STEP 6: Test write
+  log('warn', '✍️ STEP 6: Test tulis ke GitHub...');
+  try{
+    const testData = { test: 'ok', t: Date.now() };
+    const getR = await fetch('https://api.github.com/repos/' + REPO + '/contents/_test.json?ref=' + BRANCH, {
+      headers: { 'Authorization': 'token ' + TOKEN }
+    });
+    let sha = null;
+    if(getR.ok){ const j = await getR.json(); sha = j.sha; }
+
+    const body = {
+      message: 'test write',
+      content: btoa(unescape(encodeURIComponent(JSON.stringify(testData)))),
+      branch: BRANCH
+    };
+    if(sha) body.sha = sha;
+
+    const putR = await fetch('https://api.github.com/repos/' + REPO + '/contents/_test.json', {
+      method: 'PUT',
+      headers: {
+        'Authorization': 'token ' + TOKEN,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+    if(putR.ok){
+      log('ok', '✅ Tulis ke GitHub OK!');
+    } else {
+      const err = await putR.json();
+      log('err', '❌ Gagal tulis! HTTP ' + putR.status);
+      log('err', 'Detail:', err);
+      log('err', '➡️ Kemungkinan token TIDAK punya izin write (scope harus "repo")');
+    }
+  } catch(e){
+    log('err', '❌ Error: ' + e.message);
+  }
+
+  // STEP 7: Test Telegram
+  log('warn', '📨 STEP 7: Test Telegram...');
+  if(!window.ENV.TELEGRAM_TOKEN){
+    log('warn', '⚠️ Token Telegram kosong, skip');
+  } else {
+    try{
+      const r = await fetch('https://api.telegram.org/bot' + window.ENV.TELEGRAM_TOKEN + '/getMe');
+      const j = await r.json();
+      if(j.ok){
+        log('ok', '✅ Telegram bot OK: @' + j.result.username);
+      } else {
+        log('err', '❌ Telegram token invalid');
+      }
+    } catch(e){
+      log('err', '❌ ' + e.message);
+    }
+  }
+
+  log('ok', '🎉 SELESAI. Cek yang merah di atas untuk fix.');
+}
+run();
+</script>
+</body></html>

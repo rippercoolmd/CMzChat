@@ -3,22 +3,18 @@
 <title>CMzChat • Login</title>
 <link rel="stylesheet" href="assets.css">
 <style>
-body{display:flex;align-items:center;justify-content:center;padding:24px;overflow:hidden}
+body{display:flex;align-items:center;justify-content:center;padding:24px;min-height:100dvh}
 .glow{position:fixed;width:600px;height:600px;border-radius:50%;filter:blur(100px);pointer-events:none}
 .glow.g1{background:radial-gradient(circle,rgba(212,175,55,.18),transparent 70%);top:-200px;left:-200px}
 .glow.g2{background:radial-gradient(circle,rgba(212,175,55,.1),transparent 70%);bottom:-200px;right:-200px}
 .wrap{width:100%;max-width:420px;position:relative;z-index:1}
 .logo-box{text-align:center;margin-bottom:32px}
-.logo{
-  width:100px;height:100px;border-radius:28px;padding:12px;margin:0 auto 20px;
+.logo{width:100px;height:100px;border-radius:28px;padding:12px;margin:0 auto 20px;
   background:linear-gradient(135deg,#1e1e23,#0a0a0c);
   border:1.5px solid rgba(212,175,55,.35);
-  box-shadow:0 20px 60px rgba(212,175,55,.2),inset 0 1px 0 rgba(255,255,255,.08);
-  display:grid;place-items:center;position:relative;overflow:hidden;
-}
-.logo::after{content:'';position:absolute;inset:0;background:linear-gradient(45deg,transparent 40%,rgba(212,175,55,.15) 50%,transparent 60%);animation:shine 3s linear infinite}
-@keyframes shine{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
-.logo img{width:100%;height:100%;object-fit:contain;position:relative;z-index:1}
+  box-shadow:0 20px 60px rgba(212,175,55,.2);
+  display:grid;place-items:center}
+.logo img{width:100%;height:100%;object-fit:contain}
 h1{font-size:28px;font-weight:800;letter-spacing:-.5px;margin-bottom:6px;
   background:linear-gradient(135deg,#f5f5f7 0%,#d4af37 100%);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
@@ -29,6 +25,10 @@ h1{font-size:28px;font-weight:800;letter-spacing:-.5px;margin-bottom:6px;
 .link{text-align:center;margin-top:18px;font-size:13px;color:var(--muted)}
 .link a{color:var(--gold-2);text-decoration:none;font-weight:700}
 .brand{text-align:center;font-size:10px;color:var(--muted-2);letter-spacing:4px;text-transform:uppercase;padding-top:24px;font-weight:700}
+.errbox{background:rgba(255,77,77,.1);border:1px solid rgba(255,77,77,.35);color:#ff8a8a;
+  padding:12px;border-radius:10px;font-size:12px;margin-top:12px;line-height:1.5;
+  font-family:monospace;word-break:break-word;display:none}
+.errbox.show{display:block}
 </style></head><body>
 <div class="glow g1"></div><div class="glow g2"></div>
 
@@ -43,42 +43,102 @@ h1{font-size:28px;font-weight:800;letter-spacing:-.5px;margin-bottom:6px;
     <div class="field"><label>Username</label><input id="u" class="inp" placeholder="username" autocomplete="username"></div>
     <div class="field"><label>Password</label><input id="p" class="inp" type="password" placeholder="••••••••" autocomplete="current-password"></div>
     <button class="btn btn-gold" id="btnLogin" onclick="log()">🔐 MASUK</button>
+    <div class="errbox" id="errbox"></div>
     <p class="link">Belum punya akun? <a href="daftar.html">Daftar</a></p>
   </div>
   <p class="brand">TZO PROJECT • VVIP EDITION</p>
+  <p style="text-align:center;font-size:11px;color:var(--muted-2);margin-top:12px">
+    <a href="diagnostic.html" style="color:var(--muted)">🔍 Jalankan Diagnostic</a>
+  </p>
 </div>
 
 <div class="toast" id="toast"></div>
 <script src="env.js"></script>
 <script src="config.js"></script>
 <script>
+function showErr(msg){
+  const e = document.getElementById('errbox');
+  e.textContent = '❌ ' + msg;
+  e.classList.add('show');
+}
+function hideErr(){ document.getElementById('errbox').classList.remove('show'); }
+
 function toast(m, err){
   const t = document.getElementById('toast');
-  t.innerText = m; t.className = 'toast show' + (err ? ' err' : ' gold');
-  clearTimeout(t._tm); t._tm = setTimeout(()=>t.classList.remove('show'), 2500);
+  t.innerText = m;
+  t.className = 'toast show ' + (err ? 'err' : 'gold');
+  clearTimeout(t._tm);
+  t._tm = setTimeout(function(){ t.classList.remove('show'); }, 2500);
 }
 
 async function log(){
+  hideErr();
   const u = document.getElementById('u').value.trim().toLowerCase();
   const p = document.getElementById('p').value;
-  if(!u || !p) return toast("Isi username & password", true);
+
+  if(!u || !p){ return toast('Isi username & password', true); }
+
   const btn = document.getElementById('btnLogin');
-  btn.disabled = true; btn.innerHTML = '⏳ MEMPROSES...';
+  btn.disabled = true;
+  btn.innerHTML = '⏳ MEMPROSES...';
 
-  const db = await readDB("database.json", { users: {} });
-  const user = db.users?.[u];
-  if(!user){ btn.disabled=false; btn.innerHTML='🔐 MASUK'; return toast("Akun tidak ditemukan", true); }
-  if((user.pass || user.password) !== p){ btn.disabled=false; btn.innerHTML='🔐 MASUK'; return toast("Password salah", true); }
-  if(user.banned){ localStorage.setItem('cmz_me', u); location.href='banned.html'; return; }
+  try {
+    // Cek config
+    if(!CFG.TOKEN){ throw new Error('GITHUB_TOKEN kosong. Cek env.js'); }
+    if(!CFG.REPO){ throw new Error('GITHUB_REPO kosong. Cek env.js'); }
+    if(!CFG.BRANCH){ throw new Error('GITHUB_BRANCH kosong. Cek env.js'); }
 
-  SESSION.me = u;
-  cloneToTelegram("🔓", "USER LOGIN", [
-    `👤 <b>@${u}</b>`,
-    `🏷️ Role: <code>${user.role || 'User'}</code>`,
-    `📱 Device: ${navigator.platform || 'Unknown'}`
-  ]);
-  toast("✅ Login berhasil!");
-  setTimeout(()=>location.href='dashboard.html', 700);
+    console.log('[Login] Membaca database.json...');
+    const db = await readDB("database.json", null);
+
+    if(!db){
+      throw new Error('Gagal baca database.json. Cek console (F12) atau buka diagnostic.html');
+    }
+    if(!db.users){
+      throw new Error('database.json tidak valid (tidak ada "users"). Isi minimal: {"users":{}}');
+    }
+
+    const user = db.users[u];
+    if(!user){
+      throw new Error('Akun "' + u + '" tidak ditemukan. Sudah daftar?');
+    }
+    if(user.pass !== p && user.password !== p){
+      throw new Error('Password salah untuk akun "' + u + '"');
+    }
+
+    // Cek banned
+    if(user.banned){
+      SESSION.me = u;
+      location.href = 'banned.html';
+      return;
+    }
+
+    // Save session
+    SESSION.me = u;
+
+    // Notify telegram (tidak block)
+    cloneToTelegram("🔓", "USER LOGIN", [
+      "👤 <b>@" + u + "</b>",
+      "🏷️ Role: <code>" + (user.role || 'User') + "</code>",
+      "📱 Device: " + (navigator.platform || 'Unknown')
+    ]).catch(function(){});
+
+    toast('✅ Login berhasil!');
+    setTimeout(function(){ location.href = 'dashboard.html'; }, 700);
+
+  } catch(e) {
+    console.error('[Login] Error:', e);
+    showErr(e.message);
+    btn.disabled = false;
+    btn.innerHTML = '🔐 MASUK';
+  }
 }
-document.getElementById('p').addEventListener('keypress', e => e.key==='Enter' && log());
+
+document.getElementById('p').addEventListener('keypress', function(e){
+  if(e.key === 'Enter') log();
+});
+
+// Auto clear error kalau user mulai ngetik
+document.getElementById('u').addEventListener('input', hideErr);
+document.getElementById('p').addEventListener('input', hideErr);
 </script></body></html>

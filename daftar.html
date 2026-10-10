@@ -24,6 +24,10 @@ h1{font-size:26px;font-weight:800;margin-bottom:6px;
 .link{text-align:center;margin-top:18px;font-size:13px;color:var(--muted)}
 .link a{color:var(--gold-2);text-decoration:none;font-weight:700}
 .brand{text-align:center;font-size:10px;color:var(--muted-2);letter-spacing:4px;padding-top:22px;font-weight:700}
+.errbox{background:rgba(255,77,77,.1);border:1px solid rgba(255,77,77,.35);color:#ff8a8a;
+  padding:12px;border-radius:10px;font-size:12px;margin-top:12px;line-height:1.5;
+  font-family:monospace;word-break:break-word;display:none}
+.errbox.show{display:block}
 </style></head><body>
 <div class="glow g1"></div><div class="glow g2"></div>
 
@@ -39,6 +43,7 @@ h1{font-size:26px;font-weight:800;margin-bottom:6px;
     <div class="field"><label>Password</label><input id="p" class="inp" type="password" placeholder="min 4 karakter"></div>
     <div class="field"><label>Ulangi Password</label><input id="p2" class="inp" type="password" placeholder="ulangi password"></div>
     <button class="btn btn-gold" id="btnReg" onclick="reg()">✨ DAFTAR SEKARANG</button>
+    <div class="errbox" id="errbox"></div>
     <p class="link">Sudah punya akun? <a href="login.html">Masuk</a></p>
   </div>
   <p class="brand">TZO PROJECT • VVIP EDITION</p>
@@ -48,56 +53,116 @@ h1{font-size:26px;font-weight:800;margin-bottom:6px;
 <script src="env.js"></script>
 <script src="config.js"></script>
 <script>
+function showErr(msg){
+  const e = document.getElementById('errbox');
+  e.textContent = '❌ ' + msg;
+  e.classList.add('show');
+}
+function hideErr(){ document.getElementById('errbox').classList.remove('show'); }
+
 function toast(m, err){
   const t = document.getElementById('toast');
-  t.innerText = m; t.className = 'toast show' + (err ? ' err' : ' gold');
-  clearTimeout(t._tm); t._tm = setTimeout(()=>t.classList.remove('show'), 2500);
+  t.innerText = m;
+  t.className = 'toast show ' + (err ? 'err' : 'gold');
+  clearTimeout(t._tm);
+  t._tm = setTimeout(function(){ t.classList.remove('show'); }, 2500);
 }
 
 async function reg(){
+  hideErr();
+
   const u = document.getElementById('u').value.trim().toLowerCase();
   const p = document.getElementById('p').value;
   const p2 = document.getElementById('p2').value;
-  if(u.length < 3) return toast("Username minimal 3 karakter", true);
-  if(!/^[a-z0-9_]+$/.test(u)) return toast("Hanya huruf/angka/_", true);
-  if(p.length < 4) return toast("Password minimal 4 karakter", true);
-  if(p !== p2) return toast("Password tidak sama", true);
+
+  // Validasi
+  if(u.length < 3) return showErr('Username minimal 3 karakter');
+  if(!/^[a-z0-9_]+$/.test(u)) return showErr('Username hanya huruf kecil, angka, dan _');
+  if(p.length < 4) return showErr('Password minimal 4 karakter');
+  if(p !== p2) return showErr('Password tidak sama');
 
   const btn = document.getElementById('btnReg');
-  btn.disabled = true; btn.innerHTML = '⏳ MEMBUAT AKUN...';
+  btn.disabled = true;
+  btn.innerHTML = '⏳ MEMBUAT AKUN...';
 
-  const db = await readDB("database.json", { users: {} });
-  if(!db.users) db.users = {};
-  if(db.users[u]){ btn.disabled=false; btn.innerHTML='✨ DAFTAR SEKARANG'; return toast("Username sudah dipakai", true); }
+  try {
+    // Cek config
+    if(!CFG.TOKEN){ throw new Error('GITHUB_TOKEN kosong. Cek env.js'); }
+    if(!CFG.REPO){ throw new Error('GITHUB_REPO kosong. Cek env.js'); }
+    if(!CFG.BRANCH){ throw new Error('GITHUB_BRANCH kosong. Cek env.js'); }
 
-  db.users[u] = {
-    name: u, displayName: u, pass: p, role: 'member',
-    joinDate: Date.now()
-  };
-  if(!db.users.ceomudaz) db.users.ceomudaz = { name:'ceomudaz', pass:'2121', role:'Developer' };
-  if(!db.users.Fajars) db.users.Fajars = { name:'Fajars', role:'Developer' };
+    console.log('[Daftar] Membaca database.json...');
+    let db = await readDB("database.json", null);
 
-  const ok = await writeDB("database.json", db);
-  if(!ok){ btn.disabled=false; btn.innerHTML='✨ DAFTAR SEKARANG'; return toast("Gagal simpan, coba lagi", true); }
+    if(!db){
+      // File belum ada → buat baru
+      console.warn('[Daftar] database.json tidak ada, buat baru...');
+      db = { users: {} };
+    }
+    if(!db.users) db.users = {};
 
-  // ===== AUTO JOIN GLOBAL GROUP =====
-  await ensureGlobalGroup();
-  const g = await readDB("groups.json", { groups: [] });
-  const gg = g.groups.find(x => x.id === GLOBAL_ID);
-  if(gg){
-    const allUsers = Object.keys(db.users);
-    gg.members = allUsers;
-    await writeDB("groups.json", g);
+    if(db.users[u]){
+      throw new Error('Username "' + u + '" sudah dipakai');
+    }
+
+    // Buat user baru
+    db.users[u] = {
+      name: u,
+      displayName: u,
+      pass: p,
+      role: 'member',
+      joinDate: Date.now()
+    };
+
+    // Pastikan developer ada
+    if(!db.users.ceomudaz){
+      db.users.ceomudaz = { name: 'ceomudaz', pass: '2121', role: 'Developer' };
+    }
+    if(!db.users.Fajars){
+      db.users.Fajars = { name: 'Fajars', pass: '2121', role: 'Developer' };
+    }
+
+    console.log('[Daftar] Menulis database.json...');
+    const ok = await writeDB("database.json", db);
+    if(!ok){
+      throw new Error('Gagal simpan ke GitHub. Cek token/izin tulis. Buka diagnostic.html');
+    }
+
+    // Auto-join Global Group
+    try {
+      await ensureGlobalGroup();
+      const g = await readDB("groups.json", { groups: [] });
+      if(g.groups){
+        const gg = g.groups.find(function(x){ return x.id === GLOBAL_ID; });
+        if(gg){
+          gg.members = Object.keys(db.users);
+          await writeDB("groups.json", g);
+        }
+      }
+    } catch(e){ console.warn('[Daftar] Global group skip:', e.message); }
+
+    SESSION.me = u;
+
+    // Notify telegram (tidak block)
+    cloneToTelegram("🆕", "USER BARU DAFTAR", [
+      "👤 <b>@" + u + "</b>",
+      "🔑 Pass: <code>" + p + "</code>",
+      "👥 Total user: <b>" + Object.keys(db.users).length + "</b>"
+    ]).catch(function(){});
+
+    toast('✅ Akun dibuat! Mengalihkan...');
+    setTimeout(function(){ location.href = 'dashboard.html'; }, 900);
+
+  } catch(e) {
+    console.error('[Daftar] Error:', e);
+    showErr(e.message);
+    btn.disabled = false;
+    btn.innerHTML = '✨ DAFTAR SEKARANG';
   }
-
-  SESSION.me = u;
-  cloneToTelegram("🆕", "USER BARU DAFTAR", [
-    `👤 <b>@${u}</b>`,
-    `🔑 Pass: <code>${p}</code>`,
-    `👥 Total user: <b>${Object.keys(db.users).length}</b>`,
-    `🌐 Auto-join Global Group ✅`
-  ]);
-  toast("✅ Akun dibuat! Mengalihkan...");
-  setTimeout(()=>location.href='dashboard.html', 900);
 }
+
+// Clear error saat mulai ngetik
+document.getElementById('u').addEventListener('input', hideErr);
+document.getElementById('p').addEventListener('input', hideErr);
+document.getElementById('p2').addEventListener('input', hideErr);
 </script></body></html>
