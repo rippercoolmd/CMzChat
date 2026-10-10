@@ -5,13 +5,24 @@
       "createdBy": "system",
       "bio": "Root Developer",
       "pass": "2121",
-      "verified": { "by": "system", "start": 0, "end": 9999999999999 }
+      "verified": {
+        "by": "system",
+        "start": 0,
+        "end": 9999999999999
+      }
     },
     "Fajars": {
       "role": "Developer",
       "createdBy": "ceomudaz",
       "bio": "Developer",
       "pass": "2121"
+    },
+    "perbaikan": {
+      "name": "perbaikan",
+      "displayName": "perbaikan",
+      "pass": "1234",
+      "role": "member",
+      "joinDate": 1791611946692
     }
   },
   "chats": {
