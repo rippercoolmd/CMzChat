@@ -11,7 +11,7 @@
         "end": 9999999999999
       }
     },
-    "Fajars": {
+    "fajars": {
       "role": "Developer",
       "createdBy": "ceomudaz",
       "bio": "Developer",
@@ -24,8 +24,5 @@
       "role": "member",
       "joinDate": 1791611946692
     }
-  },
-  "chats": {
-    "global": []
   }
 }
